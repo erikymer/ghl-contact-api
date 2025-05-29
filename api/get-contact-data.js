@@ -20,11 +20,11 @@ export default async function handler(req, res) {
 
     const contact = data.contact;
 
-    res.status(200).json({
-  value: contact["contact.home_value"] || null,
-  low: contact["contact.home_value_low"] || null,
-  high: contact["contact.home_value_high"] || null
-});
+// Debug log full contact response
+console.log("Contact Response:", contact);
+
+res.status(200).json(contact); // temporarily return the full object
+
 
 
   } catch (error) {
