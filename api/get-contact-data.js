@@ -21,10 +21,11 @@ export default async function handler(req, res) {
     const contact = data.contact;
 
     res.status(200).json({
-      value: contact.customField?.home_value || null,
-      low: contact.customField?.home_value_low || null,
-      high: contact.customField?.home_value_high || null
-    });
+  value: contact["contact.home_value"] || null,
+  low: contact["contact.home_value_low"] || null,
+  high: contact["contact.home_value_high"] || null
+});
+
 
   } catch (error) {
     console.error("Error fetching contact data:", error);
