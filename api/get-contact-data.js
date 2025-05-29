@@ -20,10 +20,18 @@ export default async function handler(req, res) {
 
     const contact = data.contact;
 
-// Debug log full contact response
-console.log("Contact Response:", contact);
+// Helper to get custom field by ID
+const getCustomField = (id) => {
+  const field = contact.customField?.find(f => f.id === id);
+  return field?.value || null;
+};
 
-res.status(200).json(contact); // temporarily return the full object
+res.status(200).json({
+  value: getCustomField("bNU0waZidqeaWiYpSILh"),
+  low: getCustomField("iQWj6eeDvPAuvOBAkbyg"),
+  high: getCustomField("JretxiJEjHR9HZioQbvb")
+});
+
 
 
 
