@@ -6,29 +6,33 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Fetch the contact record from GHL
-    const contactResponse = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
+    // Get the contact from GHL
+    const ghlResponse = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
       headers: {
-        Authorization: `Bearer ${process.env.GHL_API_KEY}`
-      }
+        Authorization: `Bearer ${process.env.GHL_API_KEY}`,
+      },
     });
 
-    const contactData = await contactResponse.json();
-    const contact = contactData.contact;
+    const { contact } = await ghlResponse.json();
 
-    if (!contact || !contact.address1 || !contact.city || !contact.state || !contact.postalCode) {
-      return res.status(400).json({ error: "Incomplete address data for RentCast" });
+    if (!contact) {
+      return res.status(404).json({ error: "Contact not found" });
     }
 
-    const address = `${contact.address1}, ${contact.city}, ${contact.state} ${contact.postalCode}`;
+    const fullAddress = contact.fullAddress || contact.full_address;
+    if (!fullAddress) {
+      return res.status(400).json({ error: "Missing full address on contact" });
+    }
 
-    // Fetch property valuation from RentCast
-    const rentcastResponse = await fetch(`https://api.rentcast.io/v1/avm/value?address=${encodeURIComponent(address)}`, {
-      headers: {
-        Authorization: `Bearer ${process.env.RENTCAST_API_KEY}`,
-        'Content-Type': 'application/json'
+    // Fetch AVM data from RentCast
+    const rentcastResponse = await fetch(
+      `https://api.rentcast.io/v1/avm/value?address=${encodeURIComponent(fullAddress)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.RENTCAST_API_KEY}`,
+        },
       }
-    });
+    );
 
     const rentcastData = await rentcastResponse.json();
 
@@ -36,32 +40,29 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: "RentCast value not found" });
     }
 
-    // Update contact record with valuation data
+    // Update GHL contact custom fields
     await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
         Authorization: `Bearer ${process.env.GHL_API_KEY}`,
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         customField: {
           home_value: rentcastData.value || null,
           home_value_low: rentcastData.low || null,
-          home_value_high: rentcastData.high || null
-        }
-      })
+          home_value_high: rentcastData.high || null,
+        },
+      }),
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       updated: true,
-      value: rentcastData.value,
-      low: rentcastData.low,
-      high: rentcastData.high
+      full_address: fullAddress,
+      rentcast: rentcastData,
     });
-
   } catch (error) {
-    console.error("❌ Error updating contact data:", error);
-    res.status(500).json({ error: "Failed to update contact data" });
+    console.error("Error updating contact data:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 }
-
