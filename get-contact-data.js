@@ -1,4 +1,13 @@
 export default async function handler(req, res) {
+  // ✅ CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   const cid = req.query.cid;
 
   if (!cid) {
@@ -19,15 +28,22 @@ export default async function handler(req, res) {
     }
 
     const contact = data.contact;
+    const customFields = contact.customField || [];
 
-    res.status(200).json({
-      value: contact.customField?.home_value || null,
-      low: contact.customField?.home_value_low || null,
-      high: contact.customField?.home_value_high || null
+    // ✅ Replace these with your actual custom field IDs
+    const homeValue = customFields.find(f => f.id === "bNU0waZidqeaWiYpSILh")?.value || null;
+    const homeValueLow = customFields.find(f => f.id === "iQWj6eeDvPAuvOBAkbyg")?.value || null;
+    const homeValueHigh = customFields.find(f => f.id === "JretxiJEjHR9HZioQbvb")?.value || null;
+
+    return res.status(200).json({
+      address: contact.address1 || null, // ✅ Pull address directly from API
+      value: homeValue,
+      low: homeValueLow,
+      high: homeValueHigh
     });
 
   } catch (error) {
-    console.error("Error fetching contact data:", error);
-    res.status(500).json({ error: "Failed to fetch contact data" });
+    console.error("❌ Error fetching contact data:", error);
+    return res.status(500).json({ error: "Failed to fetch contact data" });
   }
 }
