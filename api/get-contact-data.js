@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // ✅ Fix for CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -30,12 +29,12 @@ export default async function handler(req, res) {
     const contact = data.contact;
     const customFields = contact.customField || [];
 
-    // 💡 Replace these IDs with your actual custom field IDs
     const homeValue = customFields.find(f => f.id === "bNU0waZidqeaWiYpSILh")?.value || null;
     const homeValueLow = customFields.find(f => f.id === "iQWj6eeDvPAuvOBAkbyg")?.value || null;
     const homeValueHigh = customFields.find(f => f.id === "JretxiJEjHR9HZioQbvb")?.value || null;
 
     return res.status(200).json({
+      address: contact.address1 || null, // 🟢 key change: send address
       value: homeValue,
       low: homeValueLow,
       high: homeValueHigh
