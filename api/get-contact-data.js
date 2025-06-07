@@ -1,40 +1,49 @@
-import fetch from "node-fetch";
-
 export default async function handler(req, res) {
-  const { cid } = req.query;
+  // ✅ CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  const cid = req.query.cid;
 
   if (!cid) {
     return res.status(400).json({ error: "Missing contact ID (cid)" });
   }
 
   try {
-    const ghlToken = process.env.GHL_API_KEY;
-    const contactRes = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
+    const response = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
       headers: {
-        Authorization: `Bearer ${ghlToken}`,
-        "Content-Type": "application/json",
-      },
+        Authorization: `Bearer ${process.env.GHL_API_KEY}`
+      }
     });
 
-    if (!contactRes.ok) {
-      return res.status(contactRes.status).json({ error: "Failed to fetch contact data" });
+    const data = await response.json();
+
+    if (!data || !data.contact) {
+      return res.status(404).json({ error: "Contact not found" });
     }
 
-    const contactData = await contactRes.json();
-    const contact = contactData.contact;
+    const contact = data.contact;
+    const customFields = contact.customField || [];
 
-    const getField = (key) => {
-      return contact.customField.find((f) => f.key === key)?.value || "";
-    };
+    // ✅ Replace these with your actual custom field IDs
+    const homeValue = customFields.find(f => f.id === "bNU0waZidqeaWiYpSILh")?.value || null;
+    const homeValueLow = customFields.find(f => f.id === "iQWj6eeDvPAuvOBAkbyg")?.value || null;
+    const homeValueHigh = customFields.find(f => f.id === "JretxiJEjHR9HZioQbvb")?.value || null;
 
     return res.status(200).json({
-      address: contact.address1 || "",
-      value: getField("home_value"),
-      low: getField("home_value_low"),
-      high: getField("home_value_high")
+      address: contact.address1 || null, // ✅ Pull address directly from API
+      value: homeValue,
+      low: homeValueLow,
+      high: homeValueHigh
     });
-  } catch (err) {
-    console.error("API Error:", err);
-    return res.status(500).json({ error: "Server error" });
+
+  } catch (error) {
+    console.error("❌ Error fetching contact data:", error);
+    return res.status(500).json({ error: "Failed to fetch contact data" });
   }
 }
