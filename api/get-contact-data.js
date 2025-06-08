@@ -40,6 +40,7 @@ export default async function handler(req, res) {
       value: homeValue,
       low: homeValueLow,
       high: homeValueHigh
+      marketstatsrc12_months_average_price: getField("marketstatsrc12_months_average_price")
     });
 
   } catch (error) {
