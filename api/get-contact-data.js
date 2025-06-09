@@ -16,8 +16,7 @@ export default async function handler(req, res) {
   try {
     const response = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
       headers: {
-        Authorization: `Bearer bd9243c9-4cf4-46ad-8224-f3c204d4e8c2`,
-        "Content-Type": "application/json"
+        Authorization: `Bearer bd9243c9-4cf4-46ad-8224-f3c204d4e8c2`
       }
     });
 
@@ -28,15 +27,26 @@ export default async function handler(req, res) {
     }
 
     const contact = data.contact;
-    const customFields = contact.customField || {};
+    const customFieldsRaw = contact.customField || [];
 
-    // ✅ Access custom fields by key (object lookup, not array find)
+    // 🧠 Normalize to object format (works if it's already an object or array)
+    let custom = {};
+    if (Array.isArray(customFieldsRaw)) {
+      for (const field of customFieldsRaw) {
+        if (field.id && field.value !== undefined) {
+          custom[field.id] = field.value;
+        }
+      }
+    } else {
+      custom = customFieldsRaw;
+    }
+
     return res.status(200).json({
       address: contact.address1 || null,
-      value: customFields["bNU0waZidqeaWiYpSILh"] || null,
-      low: customFields["iQWj6eeDvPAuvOBAkbyg"] || null,
-      high: customFields["JretxiJEjHR9HZioQbvb"] || null,
-      "1br_prices_12_mo_avg": customFields["contact.1br_prices_12_mo_avg"] || null
+      value: custom["bNU0waZidqeaWiYpSILh"] || null,
+      low: custom["iQWj6eeDvPAuvOBAkbyg"] || null,
+      high: custom["JretxiJEjHR9HZioQbvb"] || null,
+      "1br_prices_12_mo_avg": custom["contact.1br_prices_12_mo_avg"] || null
     });
 
   } catch (error) {
