@@ -34,12 +34,14 @@ export default async function handler(req, res) {
     const homeValue = customFields.find(f => f.id === "bNU0waZidqeaWiYpSILh")?.value || null;
     const homeValueLow = customFields.find(f => f.id === "iQWj6eeDvPAuvOBAkbyg")?.value || null;
     const homeValueHigh = customFields.find(f => f.id === "JretxiJEjHR9HZioQbvb")?.value || null;
+    const prices1br = customFields.find(f => f.name === "1br_prices_12_mo_avg")?.value || null; // ✅ NEW LINE
 
     return res.status(200).json({
-      address: contact.address1 || null, // ✅ Pull address directly from API
+      address: contact.address1 || null,
       value: homeValue,
       low: homeValueLow,
-      high: homeValueHigh
+      high: homeValueHigh,
+      "1br_prices_12_mo_avg": prices1br // ✅ NEW LINE
     });
 
   } catch (error) {
