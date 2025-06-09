@@ -47,6 +47,11 @@ return res.status(200).json({
   low: custom["iQWj6eeDvPAuvOBAkbyg"] || null,
   high: custom["JretxiJEjHR9HZioQbvb"] || null,
   "1br_prices_12_mo_avg": custom["D3Uygu76qyPVXewGQgsP"] || null // ✅ now correct!
+ 
+    // 🔧 New fields for pricing + map
+  average_price: custom["contact.average_price"] || null,
+  average_pricesquare_foot: custom["contact.average_pricesquare_foot"] || null,
+  postal_code: contact.postalCode || custom["contact.postal_code"] || null
 });
 
 
