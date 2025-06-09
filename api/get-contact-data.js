@@ -46,8 +46,9 @@ return res.status(200).json({
   value: custom["bNU0waZidqeaWiYpSILh"] || null,
   low: custom["iQWj6eeDvPAuvOBAkbyg"] || null,
   high: custom["JretxiJEjHR9HZioQbvb"] || null,
-  allCustomFields: custom // 👈 dump everything
+  "1br_prices_12_mo_avg": custom["D3Uygu76qyPVXewGQgsP"] || null // ✅ now correct!
 });
+
 
 
   } catch (error) {
