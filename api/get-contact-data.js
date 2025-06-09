@@ -18,15 +18,22 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ error: "Failed to fetch contact" });
     }
 
-    const { contact } = await response.json();
+    const responseData = await response.json();
+
+    // Safety check
+    if (!responseData.contact) {
+      return res.status(500).json({ error: "Contact data missing" });
+    }
+
+    const contact = responseData.contact;
     const custom = contact.customField || {};
 
     return res.status(200).json({
-      value: custom["home_value"],
-      low: custom["home_value_low"],
-      high: custom["home_value_high"],
-      address: custom["address"],
-      "1br_prices_12_mo_avg": custom["1br_prices_12_mo_avg"] || "", // ✅ This powers your graph
+      value: custom["home_value"] || "",
+      low: custom["home_value_low"] || "",
+      high: custom["home_value_high"] || "",
+      address: custom["address"] || "",
+      "1br_prices_12_mo_avg": custom["1br_prices_12_mo_avg"] || "",
     });
   } catch (error) {
     console.error("API Fetch Error:", error);
