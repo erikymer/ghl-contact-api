@@ -41,13 +41,14 @@ export default async function handler(req, res) {
       custom = customFieldsRaw;
     }
 
-    return res.status(200).json({
-      address: contact.address1 || null,
-      value: custom["bNU0waZidqeaWiYpSILh"] || null,
-      low: custom["iQWj6eeDvPAuvOBAkbyg"] || null,
-      high: custom["JretxiJEjHR9HZioQbvb"] || null,
-      "1br_prices_12_mo_avg": custom["contact.1br_prices_12_mo_avg"] || null
-    });
+return res.status(200).json({
+  address: contact.address1 || null,
+  value: custom["bNU0waZidqeaWiYpSILh"] || null,
+  low: custom["iQWj6eeDvPAuvOBAkbyg"] || null,
+  high: custom["JretxiJEjHR9HZioQbvb"] || null,
+  allCustomFields: custom // 👈 dump everything
+});
+
 
   } catch (error) {
     console.error("❌ Error fetching contact data:", error);
