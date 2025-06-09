@@ -30,22 +30,6 @@ export default async function handler(req, res) {
     const contact = data.contact;
     const customFields = contact.customField || [];
 
-    // ✅ Replace these with your actual custom field IDs
+    // ✅ Get custom fields by ID
     const homeValue = customFields.find(f => f.id === "bNU0waZidqeaWiYpSILh")?.value || null;
-    const homeValueLow = customFields.find(f => f.id === "iQWj6eeDvPAuvOBAkbyg")?.value || null;
-    const homeValueHigh = customFields.find(f => f.id === "JretxiJEjHR9HZioQbvb")?.value || null;
-    const prices1br = customFields.find(f => f.name === "1br_prices_12_mo_avg")?.value || null; // ✅ NEW LINE
-
-    return res.status(200).json({
-      address: contact.address1 || null,
-      value: homeValue,
-      low: homeValueLow,
-      high: homeValueHigh,
-      "1br_prices_12_mo_avg": prices1br // ✅ NEW LINE
-    });
-
-  } catch (error) {
-    console.error("❌ Error fetching contact data:", error);
-    return res.status(500).json({ error: "Failed to fetch contact data" });
-  }
-}
+    const homeValueLow = customFields.find(f => f.id === "iQWj6eeDvPAuvOB
