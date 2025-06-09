@@ -42,8 +42,19 @@ export default async function handler(req, res) {
     }
 
 return res.status(200).json({
+  // Home Value Block
   address: contact.address1 || null,
-  allFields: custom
+  value: custom["bNU0waZidqeaWiYpSILh"] || null,
+  low: custom["iQWj6eeDvPAuvOBAkbyg"] || null,
+  high: custom["JretxiJEjHR9HZioQbvb"] || null,
+
+  // Market Trend Graph
+  "1br_prices_12_mo_avg": custom["D3Uygu76qyPVXewGQgsP"] || null,
+
+  // ZIP Pricing + Map Block
+  average_price: custom["j0UHOHjtfE1GDhOw68IF"] || null,
+  average_pricesquare_foot: custom["cTXVPZg4rXPFxnEsRRxp"] || null,
+  postal_code: contact.postalCode || custom["contact.postal_code"] || null
 });
 
 
