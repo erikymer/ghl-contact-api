@@ -52,7 +52,7 @@ return res.status(200).json({
   "1br_prices_12_mo_avg": custom["D3Uygu76qyPVXewGQgsP"] || null,
 
   // ZIP Pricing + Map Block
-  average_price: custom["j0UHOHjtfE1GDhOw68IF"] || null,
+  average_price: custom["pYO56WbZmndS2XASlPbY"] || null,
   average_pricesquare_foot: custom["cTXVPZg4rXPFxnEsRRxp"] || null,
   postal_code: contact.postalCode || custom["contact.postal_code"] || null
 });
