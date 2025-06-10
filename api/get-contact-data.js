@@ -36,6 +36,8 @@ export default async function handler(req, res) {
     const avgPrice      = customFields.find(f => f.id === "pYO56WbZmndS2XASlPbY")?.value || null;
     const ppsf          = customFields.find(f => f.id === "cTXVPZg4rXPFxnEsRRxp")?.value || null;
     const trendData     = customFields.find(f => f.id === "D3Uygu76qyPVXewGQgsP")?.value || null;
+    const avgDom = customFields.find(f => f.customFieldKey === "contact.average_dom")?.value || null;
+
 
     return res.status(200).json({
       address: contact.address1 || null,
@@ -45,7 +47,9 @@ export default async function handler(req, res) {
       high: homeValueHigh,
       average_price: avgPrice,
       average_pricesquare_foot: ppsf,
+      average_dom: avgDom,
       "1br_prices_12_mo_avg": trendData
+      
     });
 
   } catch (error) {
