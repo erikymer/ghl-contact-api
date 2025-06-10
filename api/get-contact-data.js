@@ -28,6 +28,9 @@ export default async function handler(req, res) {
 
     const contact = data.contact;
     const customFields = contact.customField || [];
+    
+    console.log("🛠 All Custom Fields:", JSON.stringify(customFields, null, 2));
+
 
     // Custom field IDs from your working config
     const homeValue     = customFields.find(f => f.id === "bNU0waZidqeaWiYpSILh")?.value || null;
