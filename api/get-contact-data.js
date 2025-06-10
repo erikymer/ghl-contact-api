@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   try {
     const response = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
       headers: {
-        Authorization: `Bearer bd9243c9-4cf4-46ad-8224-f3c204d4e8c2`
+        Authorization: `Bearer ${process.env.GHL_API_KEY}`
       }
     });
 
@@ -27,36 +27,26 @@ export default async function handler(req, res) {
     }
 
     const contact = data.contact;
-    const customFieldsRaw = contact.customField || [];
+    const customFields = contact.customField || [];
 
-    // 🧠 Normalize to object format (works if it's already an object or array)
-    let custom = {};
-    if (Array.isArray(customFieldsRaw)) {
-      for (const field of customFieldsRaw) {
-        if (field.id && field.value !== undefined) {
-          custom[field.id] = field.value;
-        }
-      }
-    } else {
-      custom = customFieldsRaw;
-    }
+    // Custom field IDs from your working config
+    const homeValue     = customFields.find(f => f.id === "bNU0waZidqeaWiYpSILh")?.value || null;
+    const homeValueLow  = customFields.find(f => f.id === "iQWj6eeDvPAuvOBAkbyg")?.value || null;
+    const homeValueHigh = customFields.find(f => f.id === "JretxiJEjHR9HZioQbvb")?.value || null;
+    const avgPrice      = customFields.find(f => f.id === "pYO56WbZmndS2XASlPbY")?.value || null;
+    const ppsf          = customFields.find(f => f.id === "cTXVPZg4rXPFxnEsRRxp")?.value || null;
+    const trendData     = customFields.find(f => f.id === "D3Uygu76qyPVXewGQgsP")?.value || null;
 
-return res.status(200).json({
-  // Home Value Block
-  address: contact.address1 || null,
-  value: custom["bNU0waZidqeaWiYpSILh"] || null,
-  low: custom["iQWj6eeDvPAuvOBAkbyg"] || null,
-  high: custom["JretxiJEjHR9HZioQbvb"] || null,
-
-  // Market Trend Graph
-  "1br_prices_12_mo_avg": custom["D3Uygu76qyPVXewGQgsP"] || null,
-
-  // ZIP Pricing + Map Block
-  average_price: custom["pYO56WbZmndS2XASlPbY"] || null,
-  average_pricesquare_foot: custom["cTXVPZg4rXPFxnEsRRxp"] || null,
-  postal_code: contact.postalCode || custom["contact.postal_code"] || null
-});
-
+    return res.status(200).json({
+      address: contact.address1 || null,
+      postal_code: contact.postalCode || null,
+      value: homeValue,
+      low: homeValueLow,
+      high: homeValueHigh,
+      average_price: avgPrice,
+      average_pricesquare_foot: ppsf,
+      "1br_prices_12_mo_avg": trendData
+    });
 
   } catch (error) {
     console.error("❌ Error fetching contact data:", error);
