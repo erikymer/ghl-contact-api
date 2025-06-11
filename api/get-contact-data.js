@@ -44,6 +44,8 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       address: contact.address1 || null,
+      city: contact.city || null,
+      state: contact.state || null,
       postal_code: contact.postalCode || null,
       value: homeValue,
       low: homeValueLow,
@@ -53,7 +55,7 @@ export default async function handler(req, res) {
       average_dom: averageDOM,
       "1br_prices_12_mo_avg": trendData
       
-    });
+    });   
 
   } catch (error) {
     console.error("❌ Error fetching contact data:", error);
