@@ -38,10 +38,11 @@ export default async function handler(req, res) {
     const nationalNews = [];
 
     for (const feed of nationalFeeds) {
+      console.log(`🌐 Fetching ${feed.name} feed: ${feed.url}`);
       try {
         const parsed = await parser.parseURL(feed.url);
-        console.log(`✅ Parsed ${feed.name} feed`);
-        if (parsed.items.length > 0) {
+        console.log(`✅ Parsed ${feed.name} feed`, parsed.items?.[0]?.title);
+        if (parsed.items && parsed.items.length > 0) {
           nationalNews.push({
             title: parsed.items[0].title,
             url: parsed.items[0].link
@@ -49,6 +50,10 @@ export default async function handler(req, res) {
         }
       } catch (e) {
         console.warn(`⚠️ Error parsing ${feed.name}:`, e.message);
+        nationalNews.push({
+          title: `⚠️ Failed to load ${feed.name} feed`,
+          url: feed.url
+        });
       }
     }
 
