@@ -40,7 +40,7 @@ export default async function handler(req, res) {
     const ppsf          = customFields.find(f => f.id === "cTXVPZg4rXPFxnEsRRxp")?.value || null;
     const trendData     = customFields.find(f => f.id === "D3Uygu76qyPVXewGQgsP")?.value || null;
     const averageDOM    = customFields.find(f => f.id === "KOrDhDJD63JiRoBUAiBu")?.value || null;
-    const lastSold      = customFields.find(f => f.id === "922ak91uLfiw7y9UvLR3");.vlaue || null;
+    const lastSold      = customFields.find(f => f.id === "922ak91uLfiw7y9UvLR3");.value || null;
 
 
     return res.status(200).json({
