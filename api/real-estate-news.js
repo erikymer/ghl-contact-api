@@ -1,13 +1,9 @@
-import fetch from 'node-fetch';
-import Parser from 'rss-parser';
-
-const GNEWS_API_KEY = process.env.GNEWS_API_KEY;
-const parser = new Parser();
-
 export default async function handler(req, res) {
+  console.log("🛠️ START: real-estate-news.js called");
+
+  const GNEWS_API_KEY = process.env.GNEWS_API_KEY;
   const { state } = req.query;
 
-  console.log("🛠️ START: real-estate-news.js called");
   console.log("🌐 State received:", state);
   console.log("🔑 GNEWS_API_KEY present:", !!GNEWS_API_KEY);
 
@@ -17,9 +13,13 @@ export default async function handler(req, res) {
   }
 
   try {
+    const fetch = (await import('node-fetch')).default;
+    const Parser = (await import('rss-parser')).default;
+    const parser = new Parser();
+
+    // Fetch state-specific news from GNews
     const gnewsRes = await fetch(`https://gnews.io/api/v4/search?q=real+estate+${encodeURIComponent(state)}&lang=en&country=us&token=${GNEWS_API_KEY}`);
     const gnewsJson = await gnewsRes.json();
-
     console.log("📰 GNews response:", gnewsJson);
 
     const stateNews = (gnewsJson.articles || []).slice(0, 2).map(article => ({
@@ -27,6 +27,7 @@ export default async function handler(req, res) {
       url: article.url
     }));
 
+    // Define national real estate RSS feeds
     const nationalFeeds = [
       { name: "Redfin", url: "https://www.redfin.com/news/feed/" },
       { name: "Zillow", url: "https://www.zillow.com/research/feed/" },
@@ -56,6 +57,6 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error("🔥 Fatal API error:", err);
-    res.status(500).json({ error: "Something broke in real-estate-news.js" });
+    res.status(500).json({ error: "Server crashed while building news feed" });
   }
 }
