@@ -40,6 +40,7 @@ export default async function handler(req, res) {
     const ppsf          = customFields.find(f => f.id === "cTXVPZg4rXPFxnEsRRxp")?.value || null;
     const trendData     = customFields.find(f => f.id === "D3Uygu76qyPVXewGQgsP")?.value || null;
     const averageDOM    = customFields.find(f => f.id === "KOrDhDJD63JiRoBUAiBu")?.value || null;
+    const lastSold = getField("AbCdEfGhIjKlMnOpQrSt"); // Last Sold Price
 
 
     return res.status(200).json({
@@ -53,6 +54,7 @@ export default async function handler(req, res) {
       average_price: avgPrice,
       average_pricesquare_foot: ppsf,
       average_dom: averageDOM,
+      last_sold_price: lastSold, // ✅ ADD THIS LINE
       "1br_prices_12_mo_avg": trendData
       
     });   
