@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "dependencies": {
+    "node-fetch": "^3.4.1",
+    "rss-parser": "^3.12.0"
+  }
+}
