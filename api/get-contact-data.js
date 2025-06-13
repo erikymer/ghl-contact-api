@@ -2,45 +2,50 @@ export default async function handler(req, res) {
   const { cid } = req.query;
 
   if (!cid) {
-    return res.status(400).json({ error: "Missing cid parameter" });
+    return res.status(400).json({ error: "Missing contact ID (cid)" });
   }
 
-  const apiKey = process.env.GHL_API_KEY;
-
   try {
-    const contactRes = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
+    const response = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${process.env.GHL_API_KEY}`,
         "Content-Type": "application/json",
       },
     });
 
-    const contactData = await contactRes.json();
-
-    if (!contactData || !contactData.contact) {
-      return res.status(404).json({ error: "Contact not found" });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch contact: ${response.statusText}`);
     }
 
-    const contact = contactData.contact;
-    const custom = contact.customField || {};
+    const data = await response.json();
+    const contact = data.contact;
 
-    const fields = {
-      postal_code: contact.postalCode || null,  // ← native field
-      home_value: custom["bNU0waZidqeaWiYpSILh"] || null,
-      home_value_low: custom["iQWj6eeDvPAuvOBAkbyg"] || null,
-      home_value_high: custom["JretxiJEjHR9HZioQbvb"] || null,
-      average_dom: custom["KOrDhDJD63JiRoBUAiBu"] || null,
-      prev_month_avg_price: custom["dqiHEziP9xhlzZb1VLwq"] || null,
-      avg_price_per_sqft: custom["cTXVPZg4rXPFxnEsRRxp"] || null,
-      avg_price: custom["pYO56WbZmndS2XASlPbY"] || null,
-      median_price: custom["j0UHOHjtfE1GDhOw68IF"] || null,
-      max_price: custom["NvueajVMVjfQeE0uKw3v"] || null,
-      low_price: custom["eVirPTw6YipIKJiGEBCz"] || null,
-    };
+    res.status(200).json({
+      // Basic contact info
+      first_name: contact.firstName,
+      last_name: contact.lastName,
+      email: contact.email,
+      phone: contact.phone,
+      address1: contact.address1,
+      city: contact.city,
+      state: contact.state,
+      postal_code: contact.postalCode,
 
-    return res.status(200).json(fields);
+      // Market snapshot fields (custom field IDs)
+      home_value: contact.customField.bNU0waZidqeaWiYpSILh || null,
+      home_value_low: contact.customField.iQWj6eeDvPAuvOBAkbyg || null,
+      home_value_high: contact.customField.JretxiJEjHR9HZioQbvb || null,
+      average_dom: contact.customField.KOrDhDJD63JiRoBUAiBu || null,
+      prev_month_avg_price: contact.customField.dqiHEziP9xhlzZb1VLwq || null,
+      avg_price_per_sqft: contact.customField.cTXVPZg4rXPFxnEsRRxp || null,
+      avg_price: contact.customField.pYO56WbZmndS2XASlPbY || null,
+      median_price: contact.customField.j0UHOHjtfE1GDhOw68IF || null,
+      max_price: contact.customField.NvueajVMVjfQeE0uKw3v || null,
+      low_price: contact.customField.eVirPTw6YipIKJiGEBCz || null,
+    });
+
   } catch (err) {
-    console.error("🔥 API Fetch Error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error("❌ Error fetching contact:", err);
+    res.status(500).json({ error: "Failed to fetch contact" });
   }
 }
