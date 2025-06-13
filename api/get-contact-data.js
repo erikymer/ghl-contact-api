@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
     const customFields = {};
     for (const field of contact.customFields) {
-    customFields[field.customFieldDefinitionId] = field.field_value;
+      customFields[field.customFieldDefinitionId] = field.field_value;
     }
 
     res.status(200).json({
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       median_price: customFields["j0UHOHjtfE1GDhOw68IF"],
       max_price: customFields["NvueajVMVjfQeE0uKw3v"],
       low_price: customFields["eVirPTw6YipIKJiGEBCz"],
-      last_sale_price: customFields["1749841103127"], // ✅ Newly added
+      last_sale_price: customFields["1749841103127"],
       "12_month_avg_price": customFields["D3Uygu76qyPVXewGQgsP"],
       address: contact.address1
     });
