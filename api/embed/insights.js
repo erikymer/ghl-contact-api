@@ -1,5 +1,9 @@
 export default function handler(req, res) {
-  const chart = req.query.chart || "";
+  const rawChart = req.query.chart || "";
+  const title = (req.query.title || "12-Month Market Trend").replace(/[^a-zA-Z0-9\s\-]/g, "");
+
+  const isValidChart = /^[\d\s.,]+$/.test(rawChart); // Allow digits, commas, dots, spaces
+  const chart = isValidChart ? rawChart : "";
 
   res.setHeader("Content-Type", "text/html");
 
@@ -7,7 +11,7 @@ export default function handler(req, res) {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Market Insights Embed</title>
+      <title>${title}</title>
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
       <style>
@@ -15,14 +19,18 @@ export default function handler(req, res) {
           font-family: 'Segoe UI', sans-serif;
           background: #f9f9f9;
           padding: 24px;
+          text-align: center;
         }
         canvas {
           max-width: 100%;
         }
+        h2 {
+          color: #2c3e50;
+        }
       </style>
     </head>
     <body>
-      <h2>📈 Market Trend (12mo)</h2>
+      <h2>📈 ${title}</h2>
       <canvas id="chart" height="300"></canvas>
       <script>
         const dataPoints = "${chart}".split(",").map(x => parseFloat(x.trim())).filter(n => !isNaN(n));
@@ -51,7 +59,7 @@ export default function handler(req, res) {
             }
           });
         } else {
-          document.body.innerHTML += "<p style='color:red;'>❌ Invalid chart data.</p>";
+          document.body.innerHTML += "<p style='color:red; margin-top:20px;'>❌ Invalid or missing chart data.</p>";
         }
       </script>
     </body>
