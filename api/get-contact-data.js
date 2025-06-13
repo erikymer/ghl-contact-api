@@ -13,18 +13,16 @@ export default async function handler(req, res) {
       }
     });
 
-    const contact = await response.json();
+    const raw = await response.json();
 
-    // ✅ Fix: GHL returns 'customField' (singular), not 'customFields'
-    const fieldArray = contact.customField;
-
-    if (!Array.isArray(fieldArray)) {
-      return res.status(500).json({ success: false, message: "Custom fields not returned as array", raw: contact });
+    if (!raw || !raw.contact || !Array.isArray(raw.contact.customField)) {
+      return res.status(500).json({ success: false, message: 'Custom fields not returned as array', raw });
     }
 
+    const fieldArray = raw.contact.customField;
     const customFields = {};
     for (const field of fieldArray) {
-      customFields[field.customFieldDefinitionId] = field.field_value;
+      customFields[field.id] = field.value;
     }
 
     res.status(200).json({
@@ -39,9 +37,9 @@ export default async function handler(req, res) {
       median_price: customFields["j0UHOHjtfE1GDhOw68IF"],
       max_price: customFields["NvueajVMVjfQeE0uKw3v"],
       low_price: customFields["eVirPTw6YipIKJiGEBCz"],
-      last_sale_price: customFields["1749841103127"],
+      last_sale_price: customFields["1749841103127"], // ✅ Last Sold Price
       "12_month_avg_price": customFields["D3Uygu76qyPVXewGQgsP"],
-      address: contact.address1
+      address: raw.contact.address1
     });
 
   } catch (err) {
