@@ -1,8 +1,7 @@
 export default function handler(req, res) {
   const rawChart = req.query.chart || "";
   const title = (req.query.title || "12-Month Market Trend").replace(/[^a-zA-Z0-9\s\-]/g, "");
-
-  const isValidChart = /^[\d\s.,]+$/.test(rawChart); // Allow digits, commas, dots, spaces
+  const isValidChart = /^[\d\s.,]+$/.test(rawChart);
   const chart = isValidChart ? rawChart : "";
 
   res.setHeader("Content-Type", "text/html");
@@ -21,17 +20,25 @@ export default function handler(req, res) {
           padding: 24px;
           text-align: center;
         }
+        .chart-container {
+          max-width: 450px;
+          margin: 0 auto;
+        }
         canvas {
-          max-width: 100%;
+          width: 100% !important;
+          height: 180px !important;
         }
         h2 {
           color: #2c3e50;
+          margin-bottom: 16px;
         }
       </style>
     </head>
     <body>
       <h2>📈 ${title}</h2>
-      <canvas id="chart" height="300"></canvas>
+      <div class="chart-container">
+        <canvas id="chart"></canvas>
+      </div>
       <script>
         const dataPoints = "${chart}".split(",").map(x => parseFloat(x.trim())).filter(n => !isNaN(n));
         const labels = Array.from({ length: 12 }).map((_, i) => {
