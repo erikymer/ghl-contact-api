@@ -17,17 +17,32 @@ export default async function handler(req, res) {
     const Parser = (await import('rss-parser')).default;
     const parser = new Parser();
 
-    // Fetch state-specific news from GNews
-    const gnewsRes = await fetch(`https://gnews.io/api/v4/search?q=real+estate+${encodeURIComponent(state)}&lang=en&country=us&token=${GNEWS_API_KEY}`);
-    const gnewsJson = await gnewsRes.json();
-    console.log("📰 GNews response:", gnewsJson);
+    // 👉 Fetch state-specific news
+    let stateNews = [];
 
-    const stateNews = (gnewsJson.articles || []).slice(0, 2).map(article => ({
-      title: article.title,
-      url: article.url
-    }));
+    try {
+      const gnewsRes = await fetch(`https://gnews.io/api/v4/search?q=real+estate+${encodeURIComponent(state)}&lang=en&country=us&token=${GNEWS_API_KEY}`);
+      const gnewsJson = await gnewsRes.json();
+      console.log("📰 GNews response:", gnewsJson);
 
-    // Define national real estate RSS feeds
+      stateNews = (gnewsJson.articles || []).slice(0, 2).map(article => ({
+        title: article.title,
+        url: article.url
+      }));
+    } catch (err) {
+      console.warn("⚠️ Failed to fetch GNews:", err.message);
+    }
+
+    // 🔄 Fallback if no state news found
+    if (!stateNews || stateNews.length === 0) {
+      console.log(`ℹ️ No state news for "${state}", adding fallback message`);
+      stateNews = [{
+        title: `No recent news found for ${state}`,
+        url: "https://www.nar.realtor/newsroom"
+      }];
+    }
+
+    // 🌎 National real estate RSS feeds
     const nationalFeeds = [
       { name: "Redfin", url: "https://www.redfin.com/news/feed/" },
       { name: "Zillow", url: "https://www.zillow.com/research/feed/" },
@@ -38,10 +53,9 @@ export default async function handler(req, res) {
     const nationalNews = [];
 
     for (const feed of nationalFeeds) {
-      console.log(`🌐 Fetching ${feed.name} feed: ${feed.url}`);
       try {
         const parsed = await parser.parseURL(feed.url);
-        console.log(`✅ Parsed ${feed.name} feed`, parsed.items?.[0]?.title);
+        console.log(`✅ ${feed.name} feed parsed:`, parsed.items?.[0]?.title);
         if (parsed.items && parsed.items.length > 0) {
           nationalNews.push({
             title: parsed.items[0].title,
@@ -57,11 +71,11 @@ export default async function handler(req, res) {
       }
     }
 
-    console.log("✅ Returning state + national news");
+    console.log("✅ Sending news response");
     res.status(200).json({ stateNews, nationalNews });
 
   } catch (err) {
-    console.error("🔥 Fatal API error:", err);
+    console.error("🔥 Fatal error:", err);
     res.status(500).json({ error: "Server crashed while building news feed" });
   }
 }
