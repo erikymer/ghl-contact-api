@@ -6,33 +6,40 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Get full contact info (for address)
+    // Fetch main contact data (for address)
     const contactRes = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
       headers: {
         Authorization: `Bearer ${process.env.GHL_API_KEY}`,
         'Content-Type': 'application/json'
       }
     });
-
     const contact = await contactRes.json();
 
-    // Get all custom fields separately
+    // Fetch custom fields
     const fieldsRes = await fetch(`https://rest.gohighlevel.com/v1/contacts/custom_fields?contactId=${cid}`, {
       headers: {
         Authorization: `Bearer ${process.env.GHL_API_KEY}`,
         'Content-Type': 'application/json'
       }
     });
-
     const fieldData = await fieldsRes.json();
 
-    if (!Array.isArray(fieldData)) {
-      console.error("Unexpected field response:", fieldData);
-      return res.status(500).json({ success: false, message: "Custom fields not returned as array" });
+    // Log the full raw response so we can debug it
+    console.log("🔎 Raw custom field response:", JSON.stringify(fieldData));
+
+    // Handle both possible response structures
+    const fieldArray = Array.isArray(fieldData)
+      ? fieldData
+      : Array.isArray(fieldData.customFields)
+      ? fieldData.customFields
+      : null;
+
+    if (!fieldArray) {
+      return res.status(500).json({ success: false, message: "Custom fields not returned as array or in expected format", raw: fieldData });
     }
 
     const customFields = {};
-    for (const field of fieldData) {
+    for (const field of fieldArray) {
       customFields[field.customFieldDefinitionId] = field.field_value;
     }
 
@@ -54,7 +61,7 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-    console.error("Error fetching data:", err);
+    console.error("❌ Error fetching contact or fields:", err);
     res.status(500).json({ success: false, message: err.message || "Internal server error" });
   }
 }
