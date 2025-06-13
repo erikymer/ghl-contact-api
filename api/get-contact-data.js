@@ -4,7 +4,6 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-  // Handle preflight
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
@@ -25,7 +24,7 @@ export default async function handler(req, res) {
     const contact = await response.json();
 
     const customFields = {};
-    for (const field of contact.customField || []) {
+    for (const field of contact.customFields || []) {
       customFields[field.id] = field.value;
     }
 
@@ -43,7 +42,8 @@ export default async function handler(req, res) {
       low_price: customFields["eVirPTw6YipIKJiGEBCz"],
       last_sale_price: customFields["1749841103127"],
       "12_month_avg_price": customFields["D3Uygu76qyPVXewGQgsP"],
-      address: contact.address1
+      address: contact.address1,
+      postal_code: contact.postalCode,
     });
 
   } catch (err) {
