@@ -1,3 +1,12 @@
 {
-  "version": 2
+  "version": 2,
+  "headers": [
+    {
+      "source": "/embed/insights",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "ALLOWALL" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
 }
