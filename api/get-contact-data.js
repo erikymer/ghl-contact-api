@@ -15,6 +15,12 @@ export default async function handler(req, res) {
 
     const contact = await response.json();
 
+    // Log full contact object for debug if needed
+    if (!Array.isArray(contact.customFields)) {
+      console.error("customFields is not an array:", contact);
+      return res.status(500).json({ success: false, message: "Invalid contact data (customFields missing)" });
+    }
+
     const customFields = {};
     for (const field of contact.customFields) {
       customFields[field.customFieldDefinitionId] = field.field_value;
@@ -38,6 +44,6 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("Error fetching contact:", err);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    res.status(500).json({ success: false, message: err.message || 'Internal server error' });
   }
 }
