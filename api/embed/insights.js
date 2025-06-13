@@ -18,7 +18,6 @@ export default function handler(req, res) {
         body {
           font-family: 'Segoe UI', sans-serif;
           background: #f9f9f9;
-          margin: 0;
           padding: 24px;
           text-align: center;
         }
@@ -59,7 +58,7 @@ export default function handler(req, res) {
             data: {
               labels,
               datasets: [{
-                label: 'Avg Monthly Price',
+                label: '${cleanTitle}',
                 data: dataPoints,
                 borderColor: '#3498db',
                 backgroundColor: 'transparent',
