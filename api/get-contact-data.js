@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const apiKey = process.env.GHL_API_KEY; // Set this in Vercel Environment Variables
+    const apiKey = process.env.GHL_API_KEY;
     const baseUrl = "https://rest.gohighlevel.com/v1/contacts";
     const url = `${baseUrl}/${cid}`;
 
@@ -39,6 +39,9 @@ export default async function handler(req, res) {
       return field ? field.value : null;
     };
 
+    // ✅ Log all available custom fields to console for manual inspection
+    console.log("📦 Custom Field Dump:", JSON.stringify(customFieldData, null, 2));
+
     res.status(200).json({
       success: true,
       home_value: getFieldValue(customFieldData, "bNU0waZidqeaWiYpSILh"),
@@ -52,7 +55,8 @@ export default async function handler(req, res) {
       max_price: getFieldValue(customFieldData, "NvueajVMVjfQeE0uKw3v"),
       low_price: getFieldValue(customFieldData, "eVirPTw6YipIKJiGEBCz"),
       ["12_month_avg_price"]: getFieldValue(customFieldData, "D3Uygu76qyPVXewGQgsP"),
-      address: contact.address1 || ""
+      address: contact.address1 || "",
+      raw_custom_fields: customFieldData // Optional: return raw custom fields to frontend
     });
 
   } catch (err) {
