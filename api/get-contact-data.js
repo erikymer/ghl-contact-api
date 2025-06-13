@@ -1,6 +1,15 @@
 export default async function handler(req, res) {
-  const { cid } = req.query;
+  // ✅ CORS headers
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
+  // Handle preflight
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  const { cid } = req.query;
   if (!cid) {
     return res.status(400).json({ success: false, message: 'Missing contact ID' });
   }
@@ -13,15 +22,10 @@ export default async function handler(req, res) {
       }
     });
 
-    const raw = await response.json();
+    const contact = await response.json();
 
-    if (!raw || !raw.contact || !Array.isArray(raw.contact.customField)) {
-      return res.status(500).json({ success: false, message: 'Custom fields not returned as array', raw });
-    }
-
-    const fieldArray = raw.contact.customField;
     const customFields = {};
-    for (const field of fieldArray) {
+    for (const field of contact.customField || []) {
       customFields[field.id] = field.value;
     }
 
@@ -37,13 +41,13 @@ export default async function handler(req, res) {
       median_price: customFields["j0UHOHjtfE1GDhOw68IF"],
       max_price: customFields["NvueajVMVjfQeE0uKw3v"],
       low_price: customFields["eVirPTw6YipIKJiGEBCz"],
-      last_sale_price: customFields["922ak91uLfiw7y9UvLR3"],
+      last_sale_price: customFields["1749841103127"],
       "12_month_avg_price": customFields["D3Uygu76qyPVXewGQgsP"],
-      address: raw.contact.address1
+      address: contact.address1
     });
 
   } catch (err) {
-    console.error("❌ Error fetching contact:", err);
-    res.status(500).json({ success: false, message: err.message || "Internal server error" });
+    console.error("Error fetching contact:", err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 }
