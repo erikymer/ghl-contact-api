@@ -4,7 +4,6 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-  // Handle preflight
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
@@ -24,13 +23,21 @@ export default async function handler(req, res) {
 
     const contact = await response.json();
 
-    // ✅ FIXED: Corrected the customFields mapping
+    // 🔍 Debug log for full payload
+    console.log("📦 Full GHL contact response:", contact);
+
     const customFields = {};
     for (const field of contact.customFields || []) {
       customFields[field.id] = field.value;
     }
 
-    // ✅ Return structured response
+    // 🧠 Smart fallback for address-related fields
+    const resolvedAddress = contact.address1 || contact.address || contact.fullAddress || contact.street || null;
+    const resolvedPostal = contact.postalCode || contact.zip || contact.postal_code || null;
+    const resolvedCity = contact.city || null;
+    const resolvedState = contact.state || null;
+
+    // ✅ Return data
     res.status(200).json({
       success: true,
       home_value: customFields["bNU0waZidqeaWiYpSILh"],
@@ -45,10 +52,10 @@ export default async function handler(req, res) {
       low_price: customFields["eVirPTw6YipIKJiGEBCz"],
       last_sale_price: customFields["1749841103127"],
       "12_month_avg_price": customFields["D3Uygu76qyPVXewGQgsP"],
-      address: contact.address1 || null,
-      postal_code: contact.postalCode || null,
-      city: contact.city || null,
-      state: contact.state || null
+      address: resolvedAddress,
+      postal_code: resolvedPostal,
+      city: resolvedCity,
+      state: resolvedState
     });
 
   } catch (err) {
