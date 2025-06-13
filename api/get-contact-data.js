@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // ✅ CORS headers for GHL embed
+  // ✅ Allow cross-origin requests (CORS fix for GHL)
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const apiKey = process.env.GHL_API_KEY;
+    const apiKey = process.env.GHL_API_KEY; // Set this in Vercel Environment Variables
     const baseUrl = "https://rest.gohighlevel.com/v1/contacts";
     const url = `${baseUrl}/${cid}`;
 
@@ -52,9 +52,8 @@ export default async function handler(req, res) {
       max_price: getFieldValue(customFieldData, "NvueajVMVjfQeE0uKw3v"),
       low_price: getFieldValue(customFieldData, "eVirPTw6YipIKJiGEBCz"),
       ["12_month_avg_price"]: getFieldValue(customFieldData, "D3Uygu76qyPVXewGQgsP"),
-      last_sale_price: getFieldValue(customFieldData, "CMEFLcfqbrnggmBA1AtD"),
-      address: contact.address1 || "",
-      raw_custom_fields: customFieldData
+      last_sale_price: getFieldValue(customFieldData, "1749841103127"), // ✅ Added Last Sold Price
+      address: contact.address1 || ""
     });
 
   } catch (err) {
