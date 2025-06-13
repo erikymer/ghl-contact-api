@@ -23,21 +23,24 @@ export default async function handler(req, res) {
 
     const contact = await response.json();
 
-    // 🔍 Debug log for full payload
-    console.log("📦 Full GHL contact response:", contact);
+    // 🔍 Debug full contact
+    console.log("📦 Full GHL Contact:", contact);
 
     const customFields = {};
     for (const field of contact.customFields || []) {
       customFields[field.id] = field.value;
     }
 
-    // 🧠 Smart fallback for address-related fields
-    const resolvedAddress = contact.address1 || contact.address || contact.fullAddress || contact.street || null;
-    const resolvedPostal = contact.postalCode || contact.zip || contact.postal_code || null;
-    const resolvedCity = contact.city || null;
-    const resolvedState = contact.state || null;
+    // ✅ Improved fallback logic
+    const resolvedAddress =
+      contact.address1 ||
+      contact.address ||
+      contact.fullAddress ||
+      contact.street ||
+      contact.city && contact.state && contact.postalCode
+        ? `${contact.city}, ${contact.state} ${contact.postalCode}`
+        : null;
 
-    // ✅ Return data
     res.status(200).json({
       success: true,
       home_value: customFields["bNU0waZidqeaWiYpSILh"],
@@ -52,10 +55,10 @@ export default async function handler(req, res) {
       low_price: customFields["eVirPTw6YipIKJiGEBCz"],
       last_sale_price: customFields["1749841103127"],
       "12_month_avg_price": customFields["D3Uygu76qyPVXewGQgsP"],
-      address: resolvedAddress,
-      postal_code: resolvedPostal,
-      city: resolvedCity,
-      state: resolvedState
+      address: resolvedAddress || null,
+      postal_code: contact.postalCode || null,
+      city: contact.city || null,
+      state: contact.state || null
     });
 
   } catch (err) {
