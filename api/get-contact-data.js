@@ -16,8 +16,8 @@ export default async function handler(req, res) {
     const contact = await response.json();
 
     const customFields = {};
-    for (const field of contact.customField) {
-      customFields[field.customFieldDefinitionId] = field.field_value;
+    for (const field of contact.customFields) {
+    customFields[field.customFieldDefinitionId] = field.field_value;
     }
 
     res.status(200).json({
