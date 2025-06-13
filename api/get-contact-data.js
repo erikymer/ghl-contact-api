@@ -1,68 +1,53 @@
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // ✅ Fix: Enable CORS
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
-  const cid = req.query.cid;
+  const { cid } = req.query;
 
   if (!cid) {
-    return res.status(400).json({ error: "Missing contact ID (cid)" });
+    return res.status(400).json({ error: "Missing contact ID" });
   }
 
+  const token = process.env.GHL_API_KEY;
+
   try {
-    const response = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
+    const ghlRes = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
       headers: {
-        Authorization: `Bearer ${process.env.GHL_API_KEY}`
+        Authorization: `Bearer ${token}`,
+        Version: "2021-07-28"
       }
     });
 
-    const data = await response.json();
-
-    if (!data || !data.contact) {
-      return res.status(404).json({ error: "Contact not found" });
+    if (!ghlRes.ok) {
+      throw new Error("Failed to fetch contact data");
     }
 
-    const contact = data.contact;
-    const customFields = contact.customField || [];
-    
-    console.log("🛠 All Custom Fields:", JSON.stringify(customFields, null, 2));
+    const { contact } = await ghlRes.json();
 
+    const result = {
+      address: contact.customField.pYO56WbZmndS2XASlPbY,              // average_price
+      average_price: contact.customField.pYO56WbZmndS2XASlPbY,
+      average_pricesquare_foot: contact.customField.d2uKd3q1LK3tIGxxLRhh,
+      average_dom: contact.customField.KOrDhDJD63JiRoBUAiBu,
+      last_sold_price: contact.customField.D7kFdzqxKUbaEDyX4nHZ,       // if available
+      value: contact.customField.home_value,
+      low: contact.customField.home_value_low,
+      high: contact.customField.home_value_high,
+      city: contact.city,
+      state: contact.state,
+      postal_code: contact.postalCode,
+      "1br_prices_12_mo_avg": contact.customField["1br_prices_12_mo_avg"]
+    };
 
-    // Custom field IDs from your working config
-    const homeValue     = customFields.find(f => f.id === "bNU0waZidqeaWiYpSILh")?.value || null;
-    const homeValueLow  = customFields.find(f => f.id === "iQWj6eeDvPAuvOBAkbyg")?.value || null;
-    const homeValueHigh = customFields.find(f => f.id === "JretxiJEjHR9HZioQbvb")?.value || null;
-    const avgPrice      = customFields.find(f => f.id === "pYO56WbZmndS2XASlPbY")?.value || null;
-    const ppsf          = customFields.find(f => f.id === "cTXVPZg4rXPFxnEsRRxp")?.value || null;
-    const trendData     = customFields.find(f => f.id === "D3Uygu76qyPVXewGQgsP")?.value || null;
-    const averageDOM    = customFields.find(f => f.id === "KOrDhDJD63JiRoBUAiBu")?.value || null;
-    const lastSold      = customFields.find(f => f.id === "922ak91uLfiw7y9UvLR3")?.value || null;
-    const prevMonthAvg = customFields.find(f => f.id === "<YOUR_FIELD_ID>")?.value || null;
-
-
-
-    return res.status(200).json({
-      address: contact.address1 || null,
-      city: contact.city || null,
-      state: contact.state || null,
-      postal_code: contact.postalCode || null,
-      value: homeValue,
-      low: homeValueLow,
-      high: homeValueHigh,
-      average_price: avgPrice,
-      average_pricesquare_foot: ppsf,
-      average_dom: averageDOM,
-      last_sold_price: lastSold,
-      "1br_prices_12_mo_avg": trendData
-      
-    });   
-
-  } catch (error) {
-    console.error("❌ Error fetching contact data:", error);
-    return res.status(500).json({ error: "Failed to fetch contact data" });
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("API Error:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 }
