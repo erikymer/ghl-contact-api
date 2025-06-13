@@ -15,14 +15,16 @@ export default async function handler(req, res) {
 
     const contact = await response.json();
 
-    // Log full contact object for debug if needed
-    if (!Array.isArray(contact.customFields)) {
-      console.error("customFields is not an array:", contact);
-      return res.status(500).json({ success: false, message: "Invalid contact data (customFields missing)" });
+    // Normalize to handle both customFields and customField
+    const rawFields = contact.customFields || contact.customField;
+
+    if (!Array.isArray(rawFields)) {
+      console.error("customFields/customField missing or not an array:", contact);
+      return res.status(500).json({ success: false, message: "Invalid contact data (no custom fields array)" });
     }
 
     const customFields = {};
-    for (const field of contact.customFields) {
+    for (const field of rawFields) {
       customFields[field.customFieldDefinitionId] = field.field_value;
     }
 
