@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // ✅ Fix: Enable CORS for GHL
+  // ✅ Allow CORS from all origins
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -33,19 +33,24 @@ export default async function handler(req, res) {
 
     const { contact } = await ghlRes.json();
 
+    // 🧠 Safely extract custom fields (with fallback to empty string)
+    const get = (key) => contact.customField?.[key] ?? "";
+
     const result = {
-      address: contact.address1,
-      city: contact.city,
-      state: contact.state,
-      postal_code: contact.postalCode,
-      value: contact.home_value,
-      low: contact.home_value_low,
-      high: contact.home_value_high,
-      last_sold_price: contact.customField.D7kFdzqxKUbaEDyX4nHZ,
-      average_price: contact.customField.pYO56WbZmndS2XASlPbY,
-      average_pricesquare_foot: contact.customField.d2uKd3q1LK3tIGxxLRhh,
-      average_dom: contact.customField.KOrDhDJD63JiRoBUAiBu,
-      "1br_prices_12_mo_avg": contact.customField["1br_prices_12_mo_avg"]
+      address: contact.address1 ?? "",
+      city: contact.city ?? "",
+      state: contact.state ?? "",
+      postal_code: contact.postalCode ?? "",
+
+      value: contact.home_value ?? "",          // GHL native field
+      low: contact.home_value_low ?? "",        // GHL native field
+      high: contact.home_value_high ?? "",      // GHL native field
+
+      last_sold_price: get("D7kFdzqxKUbaEDyX4nHZ"),
+      average_price: get("pYO56WbZmndS2XASlPbY"),
+      average_pricesquare_foot: get("d2uKd3q1LK3tIGxxLRhh"),
+      average_dom: get("KOrDhDJD63JiRoBUAiBu"),
+      "1br_prices_12_mo_avg": get("1br_prices_12_mo_avg")
     };
 
     res.status(200).json(result);
