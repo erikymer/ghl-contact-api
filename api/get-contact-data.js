@@ -1,4 +1,55 @@
-export default function handler(req, res) {
-  const cid = req.query.cid || null;
-  res.status(200).json({ success: true, message: "API working!", cid });
+export default async function handler(req, res) {
+  const { cid } = req.query;
+
+  if (!cid) {
+    return res.status(400).json({ success: false, message: "Missing cid parameter" });
+  }
+
+  try {
+    const apiKey = process.env.GHL_API_KEY; // set this in Vercel Environment Variables
+    const baseUrl = "https://rest.gohighlevel.com/v1/contacts";
+    const url = `${baseUrl}/${cid}`;
+    
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch contact: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const contact = data.contact;
+    const customFieldData = contact.customField;
+
+    const getFieldValue = (fieldMap, id) => {
+      const field = fieldMap.find(f => f.id === id);
+      return field ? field.value : null;
+    };
+
+    res.status(200).json({
+      success: true,
+      home_value: getFieldValue(customFieldData, "bNU0waZidqeaWiYpSILh"),
+      home_value_low: getFieldValue(customFieldData, "iQWj6eeDvPAuvOBAkbyg"),
+      home_value_high: getFieldValue(customFieldData, "JretxiJEjHR9HZioQbvb"),
+      average_dom: getFieldValue(customFieldData, "KOrDhDJD63JiRoBUAiBu"),
+      prev_month_avg_price: getFieldValue(customFieldData, "dqiHEziP9xhlzZb1VLwq"),
+      avg_price_per_sqft: getFieldValue(customFieldData, "cTXVPZg4rXPFxnEsRRxp"),
+      avg_price: getFieldValue(customFieldData, "pYO56WbZmndS2XASlPbY"),
+      median_price: getFieldValue(customFieldData, "j0UHOHjtfE1GDhOw68IF"),
+      max_price: getFieldValue(customFieldData, "NvueajVMVjfQeE0uKw3v"),
+      low_price: getFieldValue(customFieldData, "eVirPTw6YipIKJiGEBCz"),
+      prices_1br: getFieldValue(customFieldData, "YOUR_1BR_FIELD_ID"),
+      prices_2br: getFieldValue(customFieldData, "YOUR_2BR_FIELD_ID"),
+      prices_3br: getFieldValue(customFieldData, "YOUR_3BR_FIELD_ID"),
+      address: contact.address1 || ""
+    });
+
+  } catch (err) {
+    console.error("API Error:", err);
+    res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+  }
 }
