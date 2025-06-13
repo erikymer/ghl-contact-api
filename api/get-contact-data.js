@@ -6,24 +6,33 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}?include=customField`, {
+    // Get full contact info (for address)
+    const contactRes = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
       headers: {
         Authorization: `Bearer ${process.env.GHL_API_KEY}`,
         'Content-Type': 'application/json'
       }
     });
 
-    const contact = await response.json();
+    const contact = await contactRes.json();
 
-    const rawFields = contact.customFields || contact.customField;
+    // Get all custom fields separately
+    const fieldsRes = await fetch(`https://rest.gohighlevel.com/v1/contacts/custom_fields?contactId=${cid}`, {
+      headers: {
+        Authorization: `Bearer ${process.env.GHL_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
 
-    if (!Array.isArray(rawFields)) {
-      console.error("customFields/customField missing or not an array:", contact);
-      return res.status(500).json({ success: false, message: "Invalid contact data (no custom fields array)" });
+    const fieldData = await fieldsRes.json();
+
+    if (!Array.isArray(fieldData)) {
+      console.error("Unexpected field response:", fieldData);
+      return res.status(500).json({ success: false, message: "Custom fields not returned as array" });
     }
 
     const customFields = {};
-    for (const field of rawFields) {
+    for (const field of fieldData) {
       customFields[field.customFieldDefinitionId] = field.field_value;
     }
 
@@ -43,8 +52,9 @@ export default async function handler(req, res) {
       "12_month_avg_price": customFields["D3Uygu76qyPVXewGQgsP"],
       address: contact.address1
     });
+
   } catch (err) {
-    console.error("Error fetching contact:", err);
-    res.status(500).json({ success: false, message: err.message || 'Internal server error' });
+    console.error("Error fetching data:", err);
+    res.status(500).json({ success: false, message: err.message || "Internal server error" });
   }
 }
