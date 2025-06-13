@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
+    const response = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}?include=customField`, {
       headers: {
         Authorization: `Bearer ${process.env.GHL_API_KEY}`,
         'Content-Type': 'application/json'
@@ -15,7 +15,6 @@ export default async function handler(req, res) {
 
     const contact = await response.json();
 
-    // Normalize to handle both customFields and customField
     const rawFields = contact.customFields || contact.customField;
 
     if (!Array.isArray(rawFields)) {
