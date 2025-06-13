@@ -3,7 +3,7 @@ export default function handler(req, res) {
   const rawTitle = req.query.title || "Market Trends";
 
   const decodedTitle = decodeURIComponent(rawTitle);
-  const cleanTitle = decodedTitle.replace(/[^\w\s\-()]/g, ""); // strip symbols
+  const cleanTitle = decodedTitle.replace(/[^\w\s\-()]/g, ""); // strip emojis & symbols
 
   res.setHeader("Content-Type", "text/html");
 
