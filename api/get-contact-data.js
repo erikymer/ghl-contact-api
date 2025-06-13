@@ -37,7 +37,7 @@ export default async function handler(req, res) {
       median_price: customFields["j0UHOHjtfE1GDhOw68IF"],
       max_price: customFields["NvueajVMVjfQeE0uKw3v"],
       low_price: customFields["eVirPTw6YipIKJiGEBCz"],
-      last_sale_price: customFields["1749841103127"], // ✅ Last Sold Price
+      last_sale_price: customFields["922ak91uLfiw7y9UvLR3"],
       "12_month_avg_price": customFields["D3Uygu76qyPVXewGQgsP"],
       address: raw.contact.address1
     });
