@@ -20,28 +20,13 @@ export default async function handler(req, res) {
     const data = await response.json();
     const contact = data.contact;
 
+    // 🚨 DEBUG: Return entire customField map for inspection
     res.status(200).json({
-      // Basic contact info
-      first_name: contact.firstName,
-      last_name: contact.lastName,
-      email: contact.email,
-      phone: contact.phone,
+      debug_fields: contact.customField,
       address1: contact.address1,
       city: contact.city,
       state: contact.state,
-      postal_code: contact.postalCode,
-
-      // Market snapshot fields (custom field IDs)
-      home_value: contact.customField.bNU0waZidqeaWiYpSILh || null,
-      home_value_low: contact.customField.iQWj6eeDvPAuvOBAkbyg || null,
-      home_value_high: contact.customField.JretxiJEjHR9HZioQbvb || null,
-      average_dom: contact.customField.KOrDhDJD63JiRoBUAiBu || null,
-      prev_month_avg_price: contact.customField.dqiHEziP9xhlzZb1VLwq || null,
-      avg_price_per_sqft: contact.customField.cTXVPZg4rXPFxnEsRRxp || null,
-      avg_price: contact.customField.pYO56WbZmndS2XASlPbY || null,
-      median_price: contact.customField.j0UHOHjtfE1GDhOw68IF || null,
-      max_price: contact.customField.NvueajVMVjfQeE0uKw3v || null,
-      low_price: contact.customField.eVirPTw6YipIKJiGEBCz || null,
+      postal_code: contact.postalCode
     });
 
   } catch (err) {
