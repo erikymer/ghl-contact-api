@@ -1,8 +1,9 @@
 export default function handler(req, res) {
-  const rawChart = req.query.chart || "";
-  const title = (req.query.title || "12-Month Market Trend").replace(/[^a-zA-Z0-9\s\-]/g, "");
-  const isValidChart = /^[\d\s.,]+$/.test(rawChart);
-  const chart = isValidChart ? rawChart : "";
+  const chart = req.query.chart || "";
+  const rawTitle = req.query.title || "Market Trends";
+
+  const decodedTitle = decodeURIComponent(rawTitle);
+  const cleanTitle = decodedTitle.replace(/[^\w\s\-()]/g, ""); // Strip emojis/symbols
 
   res.setHeader("Content-Type", "text/html");
 
@@ -10,33 +11,39 @@ export default function handler(req, res) {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>${title}</title>
+      <title>${cleanTitle}</title>
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
       <style>
         body {
           font-family: 'Segoe UI', sans-serif;
           background: #f9f9f9;
+          margin: 0;
           padding: 24px;
           text-align: center;
         }
-        .chart-container {
-          max-width: 450px;
+        h2 {
+          font-size: 20px;
+          margin-bottom: 16px;
+          color: #2c3e50;
+        }
+        .chart-wrapper {
+          max-width: 400px;
           margin: 0 auto;
+          background: #fff;
+          padding: 16px;
+          border-radius: 8px;
+          box-shadow: 0 0 8px rgba(0,0,0,0.05);
         }
         canvas {
           width: 100% !important;
-          height: 180px !important;
-        }
-        h2 {
-          color: #2c3e50;
-          margin-bottom: 16px;
+          height: 200px !important;
         }
       </style>
     </head>
     <body>
-      <h2>📈 ${title}</h2>
-      <div class="chart-container">
+      <div class="chart-wrapper">
+        <h2>${cleanTitle}</h2>
         <canvas id="chart"></canvas>
       </div>
       <script>
@@ -66,7 +73,7 @@ export default function handler(req, res) {
             }
           });
         } else {
-          document.body.innerHTML += "<p style='color:red; margin-top:20px;'>❌ Invalid or missing chart data.</p>";
+          document.body.innerHTML += "<p style='color:red;'>❌ Invalid chart data.</p>";
         }
       </script>
     </body>
