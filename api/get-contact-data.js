@@ -1,4 +1,13 @@
 export default async function handler(req, res) {
+  // ✅ Allow cross-origin requests (CORS fix for GHL)
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   const { cid } = req.query;
 
   if (!cid) {
@@ -6,10 +15,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const apiKey = process.env.GHL_API_KEY; // set this in Vercel Environment Variables
+    const apiKey = process.env.GHL_API_KEY; // Set this in Vercel Environment Variables
     const baseUrl = "https://rest.gohighlevel.com/v1/contacts";
     const url = `${baseUrl}/${cid}`;
-    
+
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${apiKey}`,
