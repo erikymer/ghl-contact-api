@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // ✅ CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -21,25 +20,22 @@ export default async function handler(req, res) {
       }
     });
 
-    const contact = await response.json();
-
-    // 🔍 Debug full contact
-    console.log("📦 Full GHL Contact:", contact);
+    const raw = await response.json();
+    const contact = raw.contact || raw; // fallback in case it's not wrapped
 
     const customFields = {};
     for (const field of contact.customFields || []) {
       customFields[field.id] = field.value;
     }
 
-    // ✅ Improved fallback logic
     const resolvedAddress =
       contact.address1 ||
       contact.address ||
       contact.fullAddress ||
       contact.street ||
-      contact.city && contact.state && contact.postalCode
+      (contact.city && contact.state && contact.postalCode
         ? `${contact.city}, ${contact.state} ${contact.postalCode}`
-        : null;
+        : null);
 
     res.status(200).json({
       success: true,
