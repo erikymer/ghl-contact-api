@@ -6,36 +6,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Fetch main contact data (for address)
-    const contactRes = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
+    const response = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
       headers: {
         Authorization: `Bearer ${process.env.GHL_API_KEY}`,
         'Content-Type': 'application/json'
       }
     });
-    const contact = await contactRes.json();
 
-    // Fetch custom fields
-    const fieldsRes = await fetch(`https://rest.gohighlevel.com/v1/contacts/custom_fields?contactId=${cid}`, {
-      headers: {
-        Authorization: `Bearer ${process.env.GHL_API_KEY}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    const fieldData = await fieldsRes.json();
+    const contact = await response.json();
 
-    // Log the full raw response so we can debug it
-    console.log("🔎 Raw custom field response:", JSON.stringify(fieldData));
+    // ✅ Fix: GHL returns 'customField' (singular), not 'customFields'
+    const fieldArray = contact.customField;
 
-    // Handle both possible response structures
-    const fieldArray = Array.isArray(fieldData)
-      ? fieldData
-      : Array.isArray(fieldData.customFields)
-      ? fieldData.customFields
-      : null;
-
-    if (!fieldArray) {
-      return res.status(500).json({ success: false, message: "Custom fields not returned as array or in expected format", raw: fieldData });
+    if (!Array.isArray(fieldArray)) {
+      return res.status(500).json({ success: false, message: "Custom fields not returned as array", raw: contact });
     }
 
     const customFields = {};
@@ -61,7 +45,7 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-    console.error("❌ Error fetching contact or fields:", err);
+    console.error("❌ Error fetching contact:", err);
     res.status(500).json({ success: false, message: err.message || "Internal server error" });
   }
 }
