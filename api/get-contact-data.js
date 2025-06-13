@@ -42,9 +42,7 @@ export default async function handler(req, res) {
       median_price: getFieldValue(customFieldData, "j0UHOHjtfE1GDhOw68IF"),
       max_price: getFieldValue(customFieldData, "NvueajVMVjfQeE0uKw3v"),
       low_price: getFieldValue(customFieldData, "eVirPTw6YipIKJiGEBCz"),
-      prices_1br: getFieldValue(customFieldData, "YOUR_1BR_FIELD_ID"),
-      prices_2br: getFieldValue(customFieldData, "YOUR_2BR_FIELD_ID"),
-      prices_3br: getFieldValue(customFieldData, "YOUR_3BR_FIELD_ID"),
+      ["12_month_avg_price"]: getFieldValue(customFieldData, "D3Uygu76qyPVXewGQgsP"),
       address: contact.address1 || ""
     });
 
