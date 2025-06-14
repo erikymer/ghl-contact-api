@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 
     const contact = await response.json();
 
-    // ✅ FIXED: customField (singular) not customFields
+    // ✅ MUST BE 'customField' (singular)
     const customFields = {};
     for (const field of contact.customField || []) {
       customFields[field.id] = field.value;
