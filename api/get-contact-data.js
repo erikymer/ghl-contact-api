@@ -49,7 +49,7 @@ export default async function handler(req, res) {
       median_price: fields["j0UHOHjtfE1GDhOw68IF"] || null,
       max_price: fields["NvueajVMVjfQeE0uKw3v"] || null,
       low_price: fields["eVirPTw6YipIKJiGEBCz"] || null,
-      last_sale_price: fields["1749841103127"] || null,
+      last_sale_price: fields["922ak91uLfiw7y9UvLR3"] || null,
       "12_month_avg_price": fields["D3Uygu76qyPVXewGQgsP"] || null,
       address: resolvedAddress || null,
       postal_code: contact.postalCode || null,
