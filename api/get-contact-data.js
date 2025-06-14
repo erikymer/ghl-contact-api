@@ -16,7 +16,10 @@ export default async function handler(req, res) {
       }
     });
 
-    const contact = await response.json();
+    const full = await response.json();
+console.log("📦 FULL RESPONSE", full);
+return res.status(200).json(full); // <- just return it raw for debug
+
 
     // ✅ MUST BE 'customField' (singular)
     const customFields = {};
