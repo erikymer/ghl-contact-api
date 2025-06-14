@@ -18,10 +18,20 @@ export default async function handler(req, res) {
 
     const contact = await response.json();
 
-    // ✅ USE correct field: `customFields` (plural)
+    console.log("📦 FULL GHL CONTACT:", contact); // 🔍 Logs everything returned by GHL
+
+    // Safeguard if contact is missing
+    if (!contact || Object.keys(contact).length === 0) {
+      return res.status(500).json({ success: false, message: "Empty contact returned" });
+    }
+
     const customFields = {};
-    for (const field of contact.customFields || []) {
-      customFields[field.id] = field.value;
+    if (Array.isArray(contact.customFields)) {
+      for (const field of contact.customFields) {
+        customFields[field.id] = field.value;
+      }
+    } else {
+      console.warn("⚠️ No customFields array found on contact object.");
     }
 
     const resolvedAddress =
@@ -51,6 +61,7 @@ export default async function handler(req, res) {
       city: contact.city || null,
       state: contact.state || null
     });
+
   } catch (err) {
     console.error("❌ Error fetching contact:", err);
     res.status(500).json({ success: false, message: "Internal server error" });
