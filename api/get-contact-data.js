@@ -14,22 +14,23 @@ export default async function handler(req, res) {
         "Content-Type": "application/json"
       }
     });
-    const contact = await apiRes.json();
 
-    console.log("📦 Full GHL Contact Object:", JSON.stringify(contact, null, 2));
+    const contact = await apiRes.json();
+    console.log("📦 Full GHL Contact:", JSON.stringify(contact, null, 2));
+
+    const rawFields = contact.customFieldData || contact.customFields || contact.customField || [];
 
     const customFields = {};
-    for (const field of contact.customField || contact.customFields || []) {
-      // Try both name formats just in case
+    for (const field of rawFields) {
       const key = field.customFieldDefinitionId || field.id;
       customFields[key] = field.value;
     }
 
-    const resolvedAddress = 
+    const resolvedAddress =
       contact.address1 ||
       contact.address ||
-      (contact.city && contact.state && contact.postalCode 
-        ? `${contact.city}, ${contact.state} ${contact.postalCode}` 
+      (contact.city && contact.state && contact.postalCode
+        ? `${contact.city}, ${contact.state} ${contact.postalCode}`
         : null);
 
     return res.status(200).json({
@@ -52,7 +53,7 @@ export default async function handler(req, res) {
       state: contact.state ?? null
     });
   } catch (err) {
-    console.error("❌ Error in get-contact-data.js:", err);
+    console.error("❌ Error fetching contact:", err);
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
