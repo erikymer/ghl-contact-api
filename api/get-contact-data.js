@@ -18,21 +18,16 @@ export default async function handler(req, res) {
 
     const contact = await response.json();
 
-    // 🔍 Print raw GHL contact to see structure
-    console.log("📦 Full GHL Contact Response:", JSON.stringify(contact, null, 2));
-
-    // 👇 CHANGE THIS IF NEEDED BASED ON THE LOGGED STRUCTURE
+    // ✅ CORRECTED: customFields (plural)
     const customFields = {};
-    if (Array.isArray(contact.customField)) {
-      for (const field of contact.customField) {
-        customFields[field.id] = field.value;
-      }
+    for (const field of contact.customFields || []) {
+      customFields[field.id] = field.value;
     }
 
-    // 🔄 Use multiple fallbacks to resolve address
     const resolvedAddress =
       contact.address1 ||
       contact.address ||
+      contact.fullAddress ||
       (contact.city && contact.state && contact.postalCode
         ? `${contact.city}, ${contact.state} ${contact.postalCode}`
         : null);
