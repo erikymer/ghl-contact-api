@@ -18,9 +18,9 @@ export default async function handler(req, res) {
 
     const contact = await response.json();
 
-    // ✅ CORRECTED: customFields (plural)
+    // ✅ FIX: GHL returns `customField` (not `customFields`)
     const customFields = {};
-    for (const field of contact.customFields || []) {
+    for (const field of contact.customField || []) {
       customFields[field.id] = field.value;
     }
 
