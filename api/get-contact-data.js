@@ -2,64 +2,57 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
+  if (req.method === "OPTIONS") return res.status(200).end();
 
   const { cid } = req.query;
-  if (!cid) {
-    return res.status(400).json({ success: false, message: "Missing contact ID" });
-  }
+  if (!cid) return res.status(400).json({ success: false, message: "Missing contact ID" });
 
   try {
-    const response = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
+    const apiRes = await fetch(`https://rest.gohighlevel.com/v1/contacts/${cid}`, {
       headers: {
         Authorization: `Bearer ${process.env.GHL_API_KEY}`,
         "Content-Type": "application/json"
       }
     });
+    const contact = await apiRes.json();
 
-    const contact = await response.json();
+    console.log("📦 Full GHL Contact Object:", JSON.stringify(contact, null, 2));
 
-    // ✅ CORRECTED: Use "contact.customField" as per your working format
     const customFields = {};
-    for (const field of contact.customField || []) {
-      customFields[field.id] = field.value;
+    for (const field of contact.customField || contact.customFields || []) {
+      // Try both name formats just in case
+      const key = field.customFieldDefinitionId || field.id;
+      customFields[key] = field.value;
     }
 
-    // ✅ Address fallback logic
-    const resolvedAddress =
+    const resolvedAddress = 
       contact.address1 ||
       contact.address ||
-      contact.fullAddress ||
-      contact.street ||
-      (contact.city && contact.state && contact.postalCode
-        ? `${contact.city}, ${contact.state} ${contact.postalCode}`
+      (contact.city && contact.state && contact.postalCode 
+        ? `${contact.city}, ${contact.state} ${contact.postalCode}` 
         : null);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      home_value: customFields["bNU0waZidqeaWiYpSILh"],
-      home_value_low: customFields["iQWj6eeDvPAuvOBAkbyg"],
-      home_value_high: customFields["JretxiJEjHR9HZioQbvb"],
-      average_dom: customFields["KOrDhDJD63JiRoBUAiBu"],
-      prev_month_avg_price: customFields["dqiHEziP9xhlzZb1VLwq"],
-      avg_price_per_sqft: customFields["cTXVPZg4rXPFxnEsRRxp"],
-      avg_price: customFields["pYO56WbZmndS2XASlPbY"],
-      median_price: customFields["j0UHOHjtfE1GDhOw68IF"],
-      max_price: customFields["NvueajVMVjfQeE0uKw3v"],
-      low_price: customFields["eVirPTw6YipIKJiGEBCz"],
-      last_sale_price: customFields["1749841103127"],
-      "12_month_avg_price": customFields["D3Uygu76qyPVXewGQgsP"],
-      address: resolvedAddress || null,
-      postal_code: contact.postalCode || null,
-      city: contact.city || null,
-      state: contact.state || null
+      home_value: customFields["bNU0waZidqeaWiYpSILh"] || null,
+      home_value_low: customFields["iQWj6eeDvPAuvOBAkbyg"] || null,
+      home_value_high: customFields["JretxiJEjHR9HZioQbvb"] || null,
+      average_dom: customFields["KOrDhDJD63JiRoBUAiBu"] || null,
+      prev_month_avg_price: customFields["dqiHEziP9xhlzZb1VLwq"] || null,
+      avg_price_per_sqft: customFields["cTXVPZg4rXPFxnEsRRxp"] || null,
+      avg_price: customFields["pYO56WbZmndS2XASlPbY"] || null,
+      median_price: customFields["j0UHOHjtfE1GDhOw68IF"] || null,
+      max_price: customFields["NvueajVMVjfQeE0uKw3v"] || null,
+      low_price: customFields["eVirPTw6YipIKJiGEBCz"] || null,
+      last_sale_price: customFields["1749841103127"] || null,
+      "12_month_avg_price": customFields["D3Uygu76qyPVXewGQgsP"] || null,
+      address: resolvedAddress,
+      postal_code: contact.postalCode ?? null,
+      city: contact.city ?? null,
+      state: contact.state ?? null
     });
-
   } catch (err) {
-    console.error("❌ Error fetching contact:", err);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error("❌ Error in get-contact-data.js:", err);
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
