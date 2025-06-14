@@ -22,14 +22,13 @@ export default async function handler(req, res) {
 
     const contact = await response.json();
 
-    // ✅ Some GHL accounts return `contact.customField` instead of `customFields`
+    // ✅ CORRECTED: Use "contact.customField" as per your working format
     const customFields = {};
-    const fieldArray = contact.customFields || contact.customField || [];
-
-    for (const field of fieldArray) {
+    for (const field of contact.customField || []) {
       customFields[field.id] = field.value;
     }
 
+    // ✅ Address fallback logic
     const resolvedAddress =
       contact.address1 ||
       contact.address ||
@@ -58,6 +57,7 @@ export default async function handler(req, res) {
       city: contact.city || null,
       state: contact.state || null
     });
+
   } catch (err) {
     console.error("❌ Error fetching contact:", err);
     res.status(500).json({ success: false, message: "Internal server error" });
