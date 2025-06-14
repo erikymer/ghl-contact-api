@@ -18,20 +18,10 @@ export default async function handler(req, res) {
 
     const contact = await response.json();
 
-    console.log("📦 FULL GHL CONTACT:", contact); // 🔍 Logs everything returned by GHL
-
-    // Safeguard if contact is missing
-    if (!contact || Object.keys(contact).length === 0) {
-      return res.status(500).json({ success: false, message: "Empty contact returned" });
-    }
-
+    // ✅ FIXED: customField (singular) not customFields
     const customFields = {};
-    if (Array.isArray(contact.customFields)) {
-      for (const field of contact.customFields) {
-        customFields[field.id] = field.value;
-      }
-    } else {
-      console.warn("⚠️ No customFields array found on contact object.");
+    for (const field of contact.customField || []) {
+      customFields[field.id] = field.value;
     }
 
     const resolvedAddress =
