@@ -17,15 +17,19 @@ export default async function handler(req, res) {
     });
 
     const contact = await response.json();
-    console.log("📦 Full GHL Contact:", JSON.stringify(contact, null, 2));
 
-    // ✅ Correct extraction from actual working key
+    // 🔍 Print raw GHL contact to see structure
+    console.log("📦 Full GHL Contact Response:", JSON.stringify(contact, null, 2));
+
+    // 👇 CHANGE THIS IF NEEDED BASED ON THE LOGGED STRUCTURE
     const customFields = {};
-    for (const field of contact.customFields || []) {
-      customFields[field.id] = field.value;
+    if (Array.isArray(contact.customField)) {
+      for (const field of contact.customField) {
+        customFields[field.id] = field.value;
+      }
     }
 
-    // ✅ Better address fallback logic
+    // 🔄 Use multiple fallbacks to resolve address
     const resolvedAddress =
       contact.address1 ||
       contact.address ||
@@ -47,7 +51,7 @@ export default async function handler(req, res) {
       low_price: customFields["eVirPTw6YipIKJiGEBCz"] || null,
       last_sale_price: customFields["1749841103127"] || null,
       "12_month_avg_price": customFields["D3Uygu76qyPVXewGQgsP"] || null,
-      address: resolvedAddress,
+      address: resolvedAddress || null,
       postal_code: contact.postalCode || null,
       city: contact.city || null,
       state: contact.state || null
