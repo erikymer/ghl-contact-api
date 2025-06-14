@@ -20,11 +20,13 @@ export default async function handler(req, res) {
       }
     });
 
-    const raw = await response.json();
-    const contact = raw.contact || raw; // fallback in case it's not wrapped
+    const contact = await response.json();
 
+    // ✅ Some GHL accounts return `contact.customField` instead of `customFields`
     const customFields = {};
-    for (const field of contact.customFields || []) {
+    const fieldArray = contact.customFields || contact.customField || [];
+
+    for (const field of fieldArray) {
       customFields[field.id] = field.value;
     }
 
@@ -56,7 +58,6 @@ export default async function handler(req, res) {
       city: contact.city || null,
       state: contact.state || null
     });
-
   } catch (err) {
     console.error("❌ Error fetching contact:", err);
     res.status(500).json({ success: false, message: "Internal server error" });
