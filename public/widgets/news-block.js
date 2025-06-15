@@ -2,17 +2,33 @@ window.addEventListener("load", async () => {
   const newsList = document.getElementById("news-list");
   if (!newsList) return;
 
-  const zip = "08052";
-  const stateCode = "NJ";
+  const cid = new URLSearchParams(window.location.search).get("cid");
+  if (!cid) {
+    newsList.innerHTML = `<li>❌ Missing contact ID (cid) in URL.</li>`;
+    return;
+  }
 
   try {
-    const res = await fetch(`https://ghl-contact-api.vercel.app/api/real-estate-news?zip=${zip}&state=${stateCode}`);
-    const json = await res.json();
-    console.log("📰 News API response:", json);
+    // Fetch contact data from your API
+    const contactRes = await fetch(`https://ghl-contact-api.vercel.app/api/get-contact-data?cid=${cid}`);
+    const contactJson = await contactRes.json();
+
+    if (!contactJson.success) {
+      newsList.innerHTML = `<li>⚠️ Unable to fetch contact info.</li>`;
+      return;
+    }
+
+    const zip = contactJson.postal_code || "08052";
+    const state = contactJson.state || "NJ";
+
+    // Fetch news from your upgraded backend
+    const newsRes = await fetch(`https://ghl-contact-api.vercel.app/api/real-estate-news?zip=${zip}&state=${state}`);
+    const newsJson = await newsRes.json();
+    console.log("📰 News API response:", newsJson);
 
     newsList.innerHTML = "";
 
-    const { stateNews = [], nationalNews = [] } = json;
+    const { stateNews = [], nationalNews = [] } = newsJson;
 
     stateNews.slice(0, 2).forEach((article) => {
       const li = document.createElement("li");
