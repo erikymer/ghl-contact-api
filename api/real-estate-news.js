@@ -13,69 +13,91 @@ export default async function handler(req, res) {
   }
 
   try {
-    const fetch = (await import('node-fetch')).default;
-    const Parser = (await import('rss-parser')).default;
+    const fetch = (await import("node-fetch")).default;
+    const Parser = (await import("rss-parser")).default;
     const parser = new Parser();
 
-    // 👉 Fetch state-specific news
+    // 👉 Fetch state-specific news from GNews
     let stateNews = [];
 
     try {
-      const gnewsRes = await fetch(`https://gnews.io/api/v4/search?q=real+estate+${encodeURIComponent(state)}&lang=en&country=us&token=${GNEWS_API_KEY}`);
+      const gnewsRes = await fetch(
+        `https://gnews.io/api/v4/search?q=real+estate+${encodeURIComponent(
+          state
+        )}&lang=en&country=us&token=${GNEWS_API_KEY}`
+      );
       const gnewsJson = await gnewsRes.json();
       console.log("📰 GNews response:", gnewsJson);
 
-      stateNews = (gnewsJson.articles || []).slice(0, 2).map(article => ({
+      stateNews = (gnewsJson.articles || []).slice(0, 2).map((article) => ({
         title: article.title,
-        url: article.url
+        url: article.url,
       }));
     } catch (err) {
       console.warn("⚠️ Failed to fetch GNews:", err.message);
     }
 
-    // 🔄 Fallback if no state news found
     if (!stateNews || stateNews.length === 0) {
       console.log(`ℹ️ No state news for "${state}", adding fallback message`);
-      stateNews = [{
-        title: `No recent news found for ${state}`,
-        url: "https://www.nar.realtor/newsroom"
-      }];
+      stateNews = [
+        {
+          title: `No recent news found for ${state}`,
+          url: "https://www.nar.realtor/newsroom",
+        },
+      ];
     }
 
-    // 🌎 National real estate RSS feeds
+    // 🌎 National RSS feeds with timeout + parallel fetching
     const nationalFeeds = [
       { name: "Redfin", url: "https://www.redfin.com/news/feed/" },
       { name: "Zillow", url: "https://www.zillow.com/research/feed/" },
       { name: "Realtor", url: "https://www.realtor.com/news/feed/" },
-      { name: "NAR", url: "https://www.nar.realtor/newsroom/rss.xml" }
+      { name: "NAR", url: "https://www.nar.realtor/newsroom/rss.xml" },
     ];
 
-    const nationalNews = [];
+    const timeoutFetch = (url, timeoutMs = 5000) =>
+      Promise.race([
+        parser.parseURL(url),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Timeout")), timeoutMs)
+        ),
+      ]);
 
-    for (const feed of nationalFeeds) {
-      try {
-        const parsed = await parser.parseURL(feed.url);
-        console.log(`✅ ${feed.name} feed parsed:`, parsed.items?.[0]?.title);
-        if (parsed.items && parsed.items.length > 0) {
-          nationalNews.push({
-            title: parsed.items[0].title,
-            url: parsed.items[0].link
-          });
+    const nationalNewsResults = await Promise.allSettled(
+      nationalFeeds.map(async (feed) => {
+        try {
+          const parsed = await timeoutFetch(feed.url, 5000);
+          return {
+            name: feed.name,
+            title: parsed.items?.[0]?.title || "No title found",
+            url: parsed.items?.[0]?.link || feed.url,
+          };
+        } catch (err) {
+          console.warn(`⚠️ ${feed.name} feed failed:`, err.message);
+          return {
+            name: feed.name,
+            title: `⚠️ Failed to load ${feed.name} feed`,
+            url: feed.url,
+          };
         }
-      } catch (e) {
-        console.warn(`⚠️ Error parsing ${feed.name}:`, e.message);
-        nationalNews.push({
-          title: `⚠️ Failed to load ${feed.name} feed`,
-          url: feed.url
-        });
-      }
-    }
+      })
+    );
+
+    const nationalNews = nationalNewsResults.map((r) =>
+      r.status === "fulfilled"
+        ? { title: r.value.title, url: r.value.url }
+        : {
+            title: "⚠️ Feed load failed",
+            url: "https://www.nar.realtor/newsroom",
+          }
+    );
 
     console.log("✅ Sending news response");
     res.status(200).json({ stateNews, nationalNews });
-
   } catch (err) {
     console.error("🔥 Fatal error:", err);
-    res.status(500).json({ error: "Server crashed while building news feed" });
+    res
+      .status(500)
+      .json({ error: "Server crashed while building news feed" });
   }
 }
