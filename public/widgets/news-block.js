@@ -31,6 +31,15 @@ window.addEventListener("load", async () => {
     const { stateNews = [], nationalNews = [] } = newsJson;
 
     const renderItem = ({ title, url, source }) => {
+      // 🚫 Filter Redfin fluff headlines
+      if (source === "Redfin") {
+        const blockedWords = ["newfins", "hires", "agents", "joined", "team"];
+        const lowerTitle = title.toLowerCase();
+        if (blockedWords.some(word => lowerTitle.includes(word))) {
+          return; // Skip this Redfin article
+        }
+      }
+
       const li = document.createElement("li");
       li.style.marginBottom = "10px";
       li.innerHTML = `
@@ -43,7 +52,7 @@ window.addEventListener("load", async () => {
     stateNews.slice(0, 2).forEach(renderItem);
     nationalNews.slice(0, 3).forEach(renderItem);
 
-    if (stateNews.length === 0 && nationalNews.length === 0) {
+    if (newsList.children.length === 0) {
       newsList.innerHTML = `<li>⚠️ No headlines available right now. Check back later.</li>`;
     }
   } catch (e) {
