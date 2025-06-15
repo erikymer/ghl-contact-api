@@ -91,13 +91,14 @@ export default async function handler(req, res) {
       })
     );
 
-    const nationalNews = nationalNewsResults.map((r) =>
-      r.status === "fulfilled" ? r.value : {
-        title: "⚠️ Feed load failed",
-        url: "https://www.nar.realtor/newsroom",
-        source: "Unknown"
-      }
-    );
+const nationalNews = nationalNewsResults
+  .filter(r => r.status === "fulfilled" && r.value.title && !r.value.title.startsWith("⚠️"))
+  .map(r => ({
+    title: r.value.title,
+    url: r.value.url,
+    source: r.value.name
+  }));
+
 
     return res.status(200).json({ stateNews, nationalNews });
   } catch (err) {
