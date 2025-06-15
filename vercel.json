@@ -14,5 +14,11 @@
         }
       ]
     }
+  ],
+  "cron": [
+    {
+      "path": "/api/refresh-news",
+      "schedule": "0 6 * * *"
+    }
   ]
 }
