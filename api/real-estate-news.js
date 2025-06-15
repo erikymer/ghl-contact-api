@@ -1,4 +1,7 @@
 export default async function handler(req, res) {
+  // ✅ Allow requests from any origin (CORS fix for GHL)
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
   console.log("🛠️ START: real-estate-news.js called");
 
   const GNEWS_API_KEY = process.env.GNEWS_API_KEY;
