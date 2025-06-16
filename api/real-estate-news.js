@@ -41,7 +41,7 @@ async function getValidArticles(feedUrl: string, source: string, maxArticles = 2
       }));
     return valid;
   } catch (err) {
-    console.warn(`⚠️ Skipping source: ${source}`, err?.message || err);
+    console.warn(`⚠️ Error parsing ${source} (${feedUrl}):`, err?.message || err);
     return [];
   }
 }
@@ -78,6 +78,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     const headlines = allHeadlines.flat().filter(Boolean);
+
+    if (!headlines.length) {
+      return res.status(200).json({
+        success: false,
+        headlines: [
+          { title: "⚠️ No headlines available right now. Check back later.", url: "#", source: "System" }
+        ]
+      });
+    }
 
     res.status(200).json({ success: true, headlines });
   } catch (err) {
