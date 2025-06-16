@@ -51,6 +51,8 @@ async function getValidArticles(feedUrl: string, source: string, maxArticles = 2
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  res.setHeader("Content-Type", "application/json");
+
   try {
     const { zip = "08052", state = "NJ" } = req.query;
 
@@ -94,7 +96,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    res.setHeader("Content-Type", "application/json");
     return res.status(200).json({ success: true, headlines });
   } catch (err) {
     console.error("❌ Top-level error in real-estate-news.js:", err);
