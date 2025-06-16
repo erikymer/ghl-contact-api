@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import Parser from "rss-parser";
 
-const parser = new Parser();
+let parser: any;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const REDFIN_FILTER_WORDS = ["newfins", "hires", "joined", "agents", "team"];
@@ -30,6 +29,11 @@ function isClean(title = "", source = "") {
 
 async function getValidArticles(feedUrl: string, source: string, maxArticles = 2) {
   try {
+    if (!parser) {
+      const Parser = (await import("rss-parser")).default;
+      parser = new Parser();
+    }
+
     const feed = await parser.parseURL(feedUrl);
     const valid = feed.items
       .filter(item => item && item.title && isRecent(item) && isClean(item.title, source))
