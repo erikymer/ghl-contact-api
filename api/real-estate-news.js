@@ -15,7 +15,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     for (const item of allNews) {
       const title = item?.title || "";
-      const source = item?.source?.name || "";
+
+      const rawSource = item?.source;
+      const source = typeof rawSource === "string" ? rawSource : rawSource?.name || "";
 
       const isListingHeadline = ADDRESS_LISTING_REGEX.test(title);
       const isRealtorListing = source === "Realtor.com" && isListingHeadline;
