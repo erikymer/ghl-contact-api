@@ -1,6 +1,7 @@
+import { NextApiRequest, NextApiResponse } from "next";
 import Parser from "rss-parser";
-const parser = new Parser();
 
+const parser = new Parser();
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const REDFIN_FILTER_WORDS = ["newfins", "hires", "joined", "agents", "team"];
@@ -8,7 +9,7 @@ const GNEWS_FILTER_WORDS = ["menendez", "indictment", "lawsuit", "crime", "trial
 const REALTOR_FILTER_WORDS = ["view more", "photos", "price", "listed", "updated", "home for sale", "realtor.com"];
 const ADDRESS_LISTING_REGEX = /^\d+\s+[^,]+,\s+[^,]+,\s+[A-Z]{2}\s+\d{5}/;
 
-function isRecent(entry) {
+function isRecent(entry: any) {
   const pubDate = new Date(entry.pubDate || entry.isoDate);
   return (new Date().getTime() - pubDate.getTime()) < 60 * DAY_MS;
 }
@@ -27,26 +28,28 @@ function isClean(title = "", source = "") {
   return !filterList.some(word => lower.includes(word)) && !isListingFormat(title);
 }
 
-async function getFirstValidArticle(feedUrl, source) {
+async function getValidArticles(feedUrl: string, source: string, maxArticles = 2) {
   try {
     const feed = await parser.parseURL(feedUrl);
-    const entry = feed.items.find(item => item && item.title && isRecent(item) && isClean(item.title, source));
-    return entry
-      ? {
-          title: entry.title,
-          url: entry.link || "#",
-          source,
-        }
-      : null;
+    const valid = feed.items
+      .filter(item => item && item.title && isRecent(item) && isClean(item.title, source))
+      .slice(0, maxArticles)
+      .map(item => ({
+        title: item.title,
+        url: item.link || "#",
+        source,
+      }));
+
+    return valid;
   } catch (err) {
     console.warn(`⚠️ Skipping source: ${source}`, err?.message || err);
-    return null;
+    return [];
   }
 }
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { zip = "08052", state = "NJ", cid } = req.query;
+    const { zip = "08052", state = "NJ" } = req.query;
 
     if (!zip || !state || zip.toString().length !== 5 || state.toString().length < 2) {
       return res.status(200).json({
@@ -71,22 +74,13 @@ export default async function handler(req, res) {
       { url: "https://www.realtor.com/news/rss", source: "Realtor.com" }
     ];
 
-    const results = await Promise.all(
-      sources.map(({ url, source }) => getFirstValidArticle(url, source))
+    const allHeadlines = await Promise.all(
+      sources.map(({ url, source }) => getValidArticles(url, source, 2)) // ✅ up to 2 articles per source
     );
 
-    const filtered = results.filter(item => item && item.title);
+    const headlines = allHeadlines.flat().filter(Boolean);
 
-    const seenSources = new Set();
-    const uniqueFiltered = [];
-
-    for (const item of filtered) {
-      if (!item?.source || seenSources.has(item.source)) continue;
-      seenSources.add(item.source);
-      uniqueFiltered.push(item);
-    }
-
-    res.status(200).json({ success: true, headlines: uniqueFiltered });
+    res.status(200).json({ success: true, headlines });
   } catch (err) {
     console.error("❌ Top-level error in news handler:", err);
     res.status(200).json({
