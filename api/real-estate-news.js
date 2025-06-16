@@ -1,16 +1,17 @@
+import { NextApiRequest, NextApiResponse } from "next";
 import Parser from "rss-parser";
-const parser = new Parser();
 
+const parser = new Parser();
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const REDFIN_FILTER_WORDS = ["newfins", "hires", "joined", "agents", "team"];
 const GNEWS_FILTER_WORDS = ["menendez", "indictment", "lawsuit", "crime", "trial", "charged", "politician", "senator", "murder"];
-const REALTOR_FILTER_WORDS = ["photos", "price", "listed", "updated", "home for sale", "view more", "realtor.com"];
+const REALTOR_FILTER_WORDS = ["view more", "photos", "price", "listed", "updated", "home for sale", "realtor.com"];
 const ADDRESS_LISTING_REGEX = /^\d+\s+[^,]+,\s+[^,]+,\s+[A-Z]{2}\s+\d{5}/;
 
-function isRecent(entry) {
+function isRecent(entry: any) {
   const pubDate = new Date(entry.pubDate || entry.isoDate);
-  return (new Date().getTime() - pubDate.getTime()) < 30 * DAY_MS;
+  return (new Date().getTime() - pubDate.getTime()) < 60 * DAY_MS;
 }
 
 function isListingFormat(title = "") {
@@ -23,10 +24,11 @@ function isClean(title = "", source = "") {
     source === "Redfin" ? REDFIN_FILTER_WORDS :
     source === "GNews" ? GNEWS_FILTER_WORDS :
     source === "Realtor.com" ? REALTOR_FILTER_WORDS : [];
+
   return !filterList.some(word => lower.includes(word)) && !isListingFormat(title);
 }
 
-async function getFirstValidArticle(feedUrl, source) {
+async function getFirstValidArticle(feedUrl: string, source: string) {
   try {
     const feed = await parser.parseURL(feedUrl);
     const entry = feed.items.find(item => item && item.title && isRecent(item) && isClean(item.title, source));
@@ -43,7 +45,7 @@ async function getFirstValidArticle(feedUrl, source) {
   }
 }
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { zip = "08052", state = "NJ" } = req.query;
 
