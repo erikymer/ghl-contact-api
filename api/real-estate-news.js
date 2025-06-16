@@ -1,68 +1,90 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { fetchNewsFromSources } from "@/lib/news/fetchNews";
+import Parser from "rss-parser";
 
+const parser = new Parser();
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const REDFIN_FILTER_WORDS = ["newfins", "hires", "joined", "agents", "team"];
+const GNEWS_FILTER_WORDS = ["menendez", "indictment", "lawsuit", "crime", "trial", "charged", "politician", "senator", "murder"];
+const REALTOR_FILTER_WORDS = ["photos", "price", "listed", "updated", "home for sale", "view more", "realtor.com"];
 const ADDRESS_LISTING_REGEX = /^\d+\s+[^,]+,\s+[^,]+,\s+[A-Z]{2}\s+\d{5}/;
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+function isRecent(entry: any) {
+  const pubDate = new Date(entry.pubDate || entry.isoDate);
+  return (new Date().getTime() - pubDate.getTime()) < 30 * DAY_MS;
+}
+
+function isListingFormat(title = "") {
+  return ADDRESS_LISTING_REGEX.test(title);
+}
+
+function isClean(title = "", source = "") {
+  const lower = title.toLowerCase();
+  const filterList =
+    source === "Redfin" ? REDFIN_FILTER_WORDS :
+    source === "GNews" ? GNEWS_FILTER_WORDS :
+    source === "Realtor.com" ? REALTOR_FILTER_WORDS : [];
+
+  return !filterList.some(word => lower.includes(word)) && !isListingFormat(title);
+}
+
+async function getFirstValidArticle(feedUrl: string, source: string) {
   try {
-    const zip = req.query.zip as string;
-    const state = req.query.state as string;
-
-    console.log("🧪 Incoming request:", { zip, state });
-
-    // 🛑 Validate inputs
-    if (!zip || !state || zip.length !== 5 || state.length < 2) {
-      console.warn("⚠️ Missing or invalid ZIP/state params:", { zip, state });
-      return res.status(200).json({
-        success: true,
-        headlines: [
-          { title: "⚠️ Missing location data. Unable to load news.", url: "#", source: "System" }
-        ]
-      });
-    }
-
-    let allNews = [];
-    try {
-      allNews = await fetchNewsFromSources(zip, state);
-    } catch (err) {
-      console.error("❌ fetchNewsFromSources failed:", err);
-      return res.status(200).json({
-        success: true,
-        headlines: [
-          { title: "📉 Mortgage Rates Dip Again Amid Market Uncertainty", url: "#", source: "MockNews" },
-          { title: "📈 Home Prices Continue Rising in Suburban Markets", url: "#", source: "MockNews2" }
-        ]
-      });
-    }
-
-    const seenSources = new Set();
-    const uniqueFiltered: any[] = [];
-
-    for (const item of allNews) {
-      const title = item?.title || "";
-      const rawSource = item?.source;
-      const source = typeof rawSource === "string" ? rawSource : rawSource?.name || "";
-
-      const isListingHeadline = ADDRESS_LISTING_REGEX.test(title);
-      const isRealtorListing = source === "Realtor.com" && isListingHeadline;
-
-      if (isRealtorListing) continue;
-      if (!source || seenSources.has(source)) continue;
-
-      seenSources.add(source);
-      uniqueFiltered.push(item);
-    }
-
-    console.log("✅ Final headlines count:", uniqueFiltered.length);
-
-    res.status(200).json({ success: true, headlines: uniqueFiltered });
+    const feed = await parser.parseURL(feedUrl);
+    const entry = feed.items.find(item => isRecent(item) && isClean(item.title, source));
+    return entry ? {
+      title: entry.title,
+      url: entry.link,
+      source
+    } : null;
   } catch (err) {
-    console.error("❌ Top-level error in real-estate-news.js:", err);
+    console.warn(`⚠️ Skipping source: ${source}`, err);
+    return null;
+  }
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { zip = "08052", state = "NJ" } = req.query;
+
+  if (!zip || !state || zip.toString().length !== 5 || state.toString().length < 2) {
     return res.status(200).json({
       success: true,
       headlines: [
-        { title: "⚠️ Unable to load full news list. Please check back later.", url: "#", source: "System" }
+        { title: "⚠️ Missing location data. Unable to load news.", url: "#", source: "System" }
       ]
     });
   }
+
+  const gnewsUrl = `https://news.google.com/rss/search?q=${zip}+real+estate+when:30d&hl=en-US&gl=US&ceid=US:en`;
+
+  const sources = [
+    { url: gnewsUrl, source: "GNews" },
+    { url: "https://www.redfin.com/news/feed/", source: "Redfin" },
+    { url: "https://www.zillow.com/research/feed/", source: "Zillow" },
+    { url: "https://www.nar.realtor/newsroom/rss.xml", source: "NAR" },
+    { url: "https://www.corelogic.com/intelligence/feed/", source: "CoreLogic" },
+    { url: "https://www.nahb.org/rss/industry-news", source: "NAHB" },
+    { url: "https://www.freddiemac.com/rss/freddie-mac-perspectives", source: "FreddieMac" },
+    { url: "https://www.altosresearch.com/blog/rss.xml", source: "Altos" },
+    { url: "https://www.realtor.com/news/rss", source: "Realtor.com" }
+  ];
+
+  const results = await Promise.all(
+    sources.map(({ url, source }) => getFirstValidArticle(url, source))
+  );
+
+  const filtered = results.filter(item =>
+    item && !item.title.toLowerCase().includes("⚠️ failed")
+  );
+
+  const seenSources = new Set();
+  const uniqueFiltered = [];
+
+  for (const item of filtered) {
+    if (!item?.source || seenSources.has(item.source)) continue;
+    seenSources.add(item.source);
+    uniqueFiltered.push(item);
+  }
+
+  res.status(200).json({ success: true, headlines: uniqueFiltered });
 }
