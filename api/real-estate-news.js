@@ -8,10 +8,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const zip = req.query.zip as string;
     const state = req.query.state as string;
 
-    console.log("ZIP:", zip, "STATE:", state); // Debug
+    console.log("ZIP:", zip, "STATE:", state); // Debug log for incoming query
 
     let allNews = [];
-
     try {
       allNews = await fetchNewsFromSources(zip, state);
     } catch (err) {
