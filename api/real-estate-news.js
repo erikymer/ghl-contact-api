@@ -51,7 +51,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader("Content-Type", "application/json");
 
   try {
-    const { cid, zip = "08052", state = "NJ" } = req.query;
+    const { cid } = req.query;
+
+    // Fetch contact ZIP and state from your /api/get-contact-data endpoint
+    const contactResp = await fetch(`https://ghl-contact-api.vercel.app/api/get-contact-data?cid=${cid}`);
+    const contactData = await contactResp.json();
+    const zip = contactData.postal_code || "08052";
+    const state = contactData.state || "NJ";
 
     if (!zip || !state || zip.toString().length !== 5 || state.toString().length < 2) {
       return res.status(200).json({
