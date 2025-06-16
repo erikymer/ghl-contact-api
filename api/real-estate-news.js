@@ -1,4 +1,4 @@
-// real-estate-news.js (ESM-compatible version for Vercel)
+// real-estate-news.js (Enhanced Debug Version)
 import Parser from 'rss-parser';
 
 const parser = new Parser();
@@ -31,19 +31,37 @@ function isClean(title = "", source = "") {
 async function getValidArticles(feedUrl, source, maxArticles = 3) {
   try {
     const feed = await parser.parseURL(feedUrl);
-    if (!feed?.items?.length) return [];
+    if (!feed?.items?.length) {
+      console.warn(`⚠️ ${source}: RSS feed has no items.`);
+      return [];
+    }
 
-    const validItems = feed.items
-      .filter(item => item && item.title && isRecent(item) && isClean(item.title, source))
-      .slice(0, maxArticles)
-      .map(item => ({
+    const validItems = [];
+    let skippedRecent = 0;
+    let skippedFiltered = 0;
+
+    for (const item of feed.items) {
+      if (!item || !item.title) continue;
+      if (!isRecent(item)) {
+        skippedRecent++;
+        continue;
+      }
+      if (!isClean(item.title, source)) {
+        skippedFiltered++;
+        continue;
+      }
+      validItems.push({
         title: item.title,
         url: item.link || "#",
         source,
-      }));
+      });
+      if (validItems.length >= maxArticles) break;
+    }
+
+    console.info(`✅ ${source}: ${validItems.length} added, ${skippedRecent} old, ${skippedFiltered} filtered.`);
 
     if (validItems.length === 0) {
-      console.warn(`⚠️ No valid headlines from: ${source}`);
+      console.warn(`⚠️ ${source}: All items skipped.`);
     }
 
     return validItems;
@@ -62,9 +80,7 @@ export default async function handler(req, res) {
     if (!cid || typeof cid !== "string") {
       return res.status(400).json({
         success: false,
-        headlines: [
-          { title: "⚠️ Missing contact ID (cid).", url: "#", source: "System" }
-        ]
+        headlines: [{ title: "⚠️ Missing contact ID (cid).", url: "#", source: "System" }]
       });
     }
 
@@ -78,9 +94,7 @@ export default async function handler(req, res) {
     if (!zip || !state || zip.toString().length !== 5 || state.toString().length < 2) {
       return res.status(200).json({
         success: true,
-        headlines: [
-          { title: "⚠️ Missing location data. Unable to load news.", url: "#", source: "System" }
-        ]
+        headlines: [{ title: "⚠️ Missing location data. Unable to load news.", url: "#", source: "System" }]
       });
     }
 
@@ -104,17 +118,13 @@ export default async function handler(req, res) {
       const result = await getValidArticles(src.url, src.source, 3);
       if (result.length > 0) {
         headlines.push(...result);
-      } else {
-        console.warn(`⚠️ No headlines returned from source: ${src.source}`);
       }
     }
 
     if (!headlines.length) {
       return res.status(200).json({
         success: false,
-        headlines: [
-          { title: "⚠️ No headlines available right now. Check back later.", url: "#", source: "System" }
-        ]
+        headlines: [{ title: "⚠️ No headlines available right now. Check back later.", url: "#", source: "System" }]
       });
     }
 
@@ -123,9 +133,7 @@ export default async function handler(req, res) {
     console.error("❌ Real Estate News Error:", err);
     return res.status(500).json({
       success: false,
-      headlines: [
-        { title: "⚠️ Server error. Unable to load news.", url: "#", source: "System" }
-      ]
+      headlines: [{ title: "⚠️ Server error. Unable to load news.", url: "#", source: "System" }]
     });
   }
 }
