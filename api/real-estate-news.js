@@ -53,6 +53,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { cid } = req.query;
 
+    if (!cid || typeof cid !== "string") {
+      return res.status(400).json({
+        success: false,
+        headlines: [
+          { title: "⚠️ Missing contact ID (cid).", url: "#", source: "System" }
+        ]
+      });
+    }
+
     const contactResp = await fetch(`https://ghl-contact-api.vercel.app/api/get-contact-data?cid=${cid}`);
     if (!contactResp.ok) {
       throw new Error(`Failed to fetch contact data. Status: ${contactResp.status}`);
