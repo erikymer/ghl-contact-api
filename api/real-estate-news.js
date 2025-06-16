@@ -82,7 +82,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     const headlines = results
-      .flatMap(r => (r.status === "fulfilled" ? r.value : []))
+      .filter(r => r.status === "fulfilled")
+      .flatMap(r => (r as PromiseFulfilledResult<any>).value || [])
       .filter(Boolean);
 
     if (!headlines.length) {
@@ -97,7 +98,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ success: true, headlines });
   } catch (err: any) {
     console.error("❌ Top-level error in real-estate-news.js:", err);
-    return res.status(200).json({
+    return res.status(500).json({
       success: false,
       headlines: [
         { title: "⚠️ Server error. Unable to load news.", url: "#", source: "System" }
