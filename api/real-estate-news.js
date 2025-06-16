@@ -44,7 +44,7 @@ async function getValidArticles(feedUrl: string, source: string, maxArticles = 2
         source,
       }));
     return valid;
-  } catch (err) {
+  } catch (err: any) {
     console.warn(`⚠️ Skipping source ${source}:`, err?.message || err);
     return [];
   }
@@ -54,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader("Content-Type", "application/json");
 
   try {
-    const { zip = "08052", state = "NJ" } = req.query;
+    const { zip = "08052", state = "NJ", cid } = req.query;
 
     if (!zip || !state || zip.toString().length !== 5 || state.toString().length < 2) {
       return res.status(200).json({
@@ -97,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     return res.status(200).json({ success: true, headlines });
-  } catch (err) {
+  } catch (err: any) {
     console.error("❌ Top-level error in real-estate-news.js:", err);
     return res.status(200).json({
       success: false,
