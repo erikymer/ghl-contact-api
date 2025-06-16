@@ -29,31 +29,30 @@ function isClean(title = "", source = "") {
 }
 
 async function getValidArticles(feedUrl: string, source: string, maxArticles = 2) {
-  let feed;
   try {
-    feed = await parser.parseURL(feedUrl);
+    const feed = await parser.parseURL(feedUrl);
+
+    if (!feed?.items?.length) return [];
+
+    return feed.items
+      .filter(item => item && item.title && isRecent(item) && isClean(item.title, source))
+      .slice(0, maxArticles)
+      .map(item => ({
+        title: item.title,
+        url: item.link || "#",
+        source,
+      }));
   } catch (err: any) {
-    console.warn(`⚠️ Failed to parse feed for ${source}:`, err?.message || err);
+    console.warn(`⚠️ Skipping source: ${source}`, err?.message || err);
     return [];
   }
-
-  if (!feed?.items?.length) return [];
-
-  return feed.items
-    .filter(item => item && item.title && isRecent(item) && isClean(item.title, source))
-    .slice(0, maxArticles)
-    .map(item => ({
-      title: item.title,
-      url: item.link || "#",
-      source,
-    }));
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.setHeader("Content-Type", "application/json");
 
   try {
-    const { zip = "08052", state = "NJ" } = req.query;
+    const { cid, zip = "08052", state = "NJ" } = req.query;
 
     if (!zip || !state || zip.toString().length !== 5 || state.toString().length < 2) {
       return res.status(200).json({
