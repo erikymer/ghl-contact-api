@@ -95,7 +95,7 @@ export default async function handler(req, res) {
     const headlines = [];
 
     for (const src of sources) {
-      const result = await getValidArticles(src.url, src.source, 1);
+      const result = await getValidArticles(src.url, src.source, 3);
       if (result.length > 0) headlines.push(...result);
     }
 
