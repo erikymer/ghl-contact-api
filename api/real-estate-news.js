@@ -28,9 +28,14 @@ function isClean(title = "", source = "") {
   return !filterList.some(word => lower.includes(word)) && !isListingFormat(title);
 }
 
-async function getValidArticles(feedUrl: string, source: string, maxArticles = 2) {
+async function getValidArticles(feedUrl: string, source: string, maxArticles = 2): Promise<{ title: string; url: string; source: string }[]> {
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
     const feed = await parser.parseURL(feedUrl);
+    clearTimeout(timeout);
+
     if (!feed?.items?.length) return [];
 
     return feed.items
@@ -42,7 +47,7 @@ async function getValidArticles(feedUrl: string, source: string, maxArticles = 2
         source,
       }));
   } catch (err: any) {
-    console.warn(`⚠️ Skipping source: ${source}`, err?.message || err);
+    console.warn(`⚠️ Skipping ${source}:`, err?.message || err);
     return [];
   }
 }
@@ -56,31 +61,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!cid || typeof cid !== "string") {
       return res.status(400).json({
         success: false,
-        headlines: [
-          { title: "⚠️ Missing contact ID (cid).", url: "#", source: "System" }
-        ]
+        headlines: [{ title: "⚠️ Missing contact ID (cid).", url: "#", source: "System" }]
       });
     }
 
     const contactResp = await fetch(`https://ghl-contact-api.vercel.app/api/get-contact-data?cid=${cid}`);
-    if (!contactResp.ok) {
-      throw new Error(`Failed to fetch contact data. Status: ${contactResp.status}`);
-    }
-
+    if (!contactResp.ok) throw new Error(`Failed to fetch contact. Status: ${contactResp.status}`);
     const contactData = await contactResp.json();
-    console.log("📦 Fetched contact data:", contactData);
 
     const zip = contactData.postal_code || "08052";
     const state = contactData.state || "NJ";
-
-    if (!zip || !state || zip.toString().length !== 5 || state.toString().length < 2) {
-      return res.status(200).json({
-        success: true,
-        headlines: [
-          { title: "⚠️ Missing location data. Unable to load news.", url: "#", source: "System" }
-        ]
-      });
-    }
 
     const gnewsUrl = `https://news.google.com/rss/search?q=${zip}+real+estate+when:30d&hl=en-US&gl=US&ceid=US:en`;
 
@@ -96,32 +86,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       { url: "https://www.realtor.com/news/rss", source: "Realtor.com" }
     ];
 
-    const results = await Promise.allSettled(
-      sources.map(({ url, source }) => getValidArticles(url, source, 2))
-    );
-
-    const headlines = results
-      .filter((r): r is PromiseFulfilledResult<any> => r.status === "fulfilled")
-      .flatMap(r => r.value || [])
-      .filter(Boolean);
+    const headlines: any[] = [];
+    for (const src of sources) {
+      const result = await getValidArticles(src.url, src.source, 1);
+      if (result.length > 0) headlines.push(...result);
+    }
 
     if (!headlines.length) {
       return res.status(200).json({
         success: false,
-        headlines: [
-          { title: "⚠️ No headlines available right now. Check back later.", url: "#", source: "System" }
-        ]
+        headlines: [{ title: "⚠️ No headlines available right now. Check back later.", url: "#", source: "System" }]
       });
     }
 
     return res.status(200).json({ success: true, headlines });
   } catch (err: any) {
-    console.error("❌ Top-level error in real-estate-news.js:", err);
+    console.error("❌ Real Estate News Error:", err?.message || err);
     return res.status(500).json({
       success: false,
-      headlines: [
-        { title: "⚠️ Server error. Unable to load news.", url: "#", source: "System" }
-      ]
+      headlines: [{ title: "⚠️ Server error. Unable to load news.", url: "#", source: "System" }]
     });
   }
 }
