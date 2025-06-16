@@ -1,5 +1,5 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import Parser from "rss-parser/dist/rss-parser.min.mjs"; // ESM-compatible build
+// real-estate-news.js (ESM-compatible version for Vercel)
+import Parser from 'rss-parser';
 
 const parser = new Parser();
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -110,7 +110,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ success: true, headlines });
   } catch (err) {
-    console.error("❌ News API Error:", err);
+    console.error("❌ Real Estate News Error:", err);
     return res.status(500).json({
       success: false,
       headlines: [
