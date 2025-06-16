@@ -15,7 +15,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     for (const item of allNews) {
       const title = item?.title || "";
-
       const rawSource = item?.source;
       const source = typeof rawSource === "string" ? rawSource : rawSource?.name || "";
 
@@ -23,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const isRealtorListing = source === "Realtor.com" && isListingHeadline;
 
       if (isRealtorListing) continue;
-      if (seenSources.has(source)) continue;
+      if (!source || seenSources.has(source)) continue;
 
       seenSources.add(source);
       uniqueFiltered.push(item);
