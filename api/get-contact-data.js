@@ -1,3 +1,17 @@
+const stateAbbrMap = {
+  "alabama": "AL", "alaska": "AK", "arizona": "AZ", "arkansas": "AR", "california": "CA",
+  "colorado": "CO", "connecticut": "CT", "delaware": "DE", "florida": "FL", "georgia": "GA",
+  "hawaii": "HI", "idaho": "ID", "illinois": "IL", "indiana": "IN", "iowa": "IA",
+  "kansas": "KS", "kentucky": "KY", "louisiana": "LA", "maine": "ME", "maryland": "MD",
+  "massachusetts": "MA", "michigan": "MI", "minnesota": "MN", "mississippi": "MS",
+  "missouri": "MO", "montana": "MT", "nebraska": "NE", "nevada": "NV", "new hampshire": "NH",
+  "new jersey": "NJ", "new mexico": "NM", "new york": "NY", "north carolina": "NC",
+  "north dakota": "ND", "ohio": "OH", "oklahoma": "OK", "oregon": "OR", "pennsylvania": "PA",
+  "rhode island": "RI", "south carolina": "SC", "south dakota": "SD", "tennessee": "TN",
+  "texas": "TX", "utah": "UT", "vermont": "VT", "virginia": "VA", "washington": "WA",
+  "west virginia": "WV", "wisconsin": "WI", "wyoming": "WY"
+};
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -37,6 +51,10 @@ export default async function handler(req, res) {
         ? `${contact.city}, ${contact.state} ${contact.postalCode}`
         : null);
 
+    const rawState = contact.state || "";
+    const normalizedState = rawState.trim().toLowerCase();
+    const stateAbbr = stateAbbrMap[normalizedState] || rawState.substring(0, 2).toUpperCase();
+
     res.status(200).json({
       success: true,
       home_value: fields["bNU0waZidqeaWiYpSILh"] || null,
@@ -54,7 +72,7 @@ export default async function handler(req, res) {
       address: resolvedAddress || null,
       postal_code: contact.postalCode || null,
       city: contact.city || null,
-      state: contact.state || null
+      state: stateAbbr
     });
   } catch (err) {
     console.error("❌ Error fetching contact:", err);
