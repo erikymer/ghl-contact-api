@@ -1,5 +1,5 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import Parser from "rss-parser";
+const Parser = require("rss-parser");
+const fetch = require("node-fetch");
 
 const parser = new Parser();
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -9,7 +9,7 @@ const GNEWS_FILTER_WORDS = ["menendez", "indictment", "lawsuit", "crime", "trial
 const REALTOR_FILTER_WORDS = ["view more", "photos", "price", "listed", "updated", "home for sale", "realtor.com"];
 const ADDRESS_LISTING_REGEX = /^\d+\s+[^,]+,\s+[^,]+,\s+[A-Z]{2}\s+\d{5}/;
 
-function isRecent(entry: any) {
+function isRecent(entry) {
   const pubDate = new Date(entry.pubDate || entry.isoDate);
   return (new Date().getTime() - pubDate.getTime()) < 60 * DAY_MS;
 }
@@ -28,24 +28,26 @@ function isClean(title = "", source = "") {
   return !filterList.some(word => lower.includes(word)) && !isListingFormat(title);
 }
 
-async function getValidArticles(feedUrl: string, source: string, maxArticles = 1) {
+async function getValidArticles(feedUrl, source, maxArticles = 2) {
   try {
     const feed = await parser.parseURL(feedUrl);
-    return (feed.items || [])
-      .filter(item => item.title && isRecent(item) && isClean(item.title, source))
+    if (!feed?.items?.length) return [];
+
+    return feed.items
+      .filter(item => item && item.title && isRecent(item) && isClean(item.title, source))
       .slice(0, maxArticles)
       .map(item => ({
         title: item.title,
         url: item.link || "#",
         source,
       }));
-  } catch (err: any) {
-    console.warn(`⚠️ Skipped ${source}`, err?.message || err);
+  } catch (err) {
+    console.warn(`⚠️ Skipping source: ${source}`, err?.message || err);
     return [];
   }
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+module.exports = async (req, res) => {
   res.setHeader("Content-Type", "application/json");
 
   try {
@@ -61,17 +63,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const contactResp = await fetch(`https://ghl-contact-api.vercel.app/api/get-contact-data?cid=${cid}`);
-    if (!contactResp.ok) throw new Error(`Failed to fetch contact. Status: ${contactResp.status}`);
+    if (!contactResp.ok) throw new Error(`Failed to fetch contact data. Status: ${contactResp.status}`);
     const contactData = await contactResp.json();
 
     const zip = contactData.postal_code || "08052";
     const state = contactData.state || "NJ";
 
-    if (!zip || !state) {
+    if (!zip || !state || zip.toString().length !== 5 || state.toString().length < 2) {
       return res.status(200).json({
-        success: false,
+        success: true,
         headlines: [
-          { title: "⚠️ Missing location info for this contact.", url: "#", source: "System" }
+          { title: "⚠️ Missing location data. Unable to load news.", url: "#", source: "System" }
         ]
       });
     }
@@ -90,34 +92,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       { url: "https://www.realtor.com/news/rss", source: "Realtor.com" }
     ];
 
-    const headlines: any[] = [];
-
-    for (const { url, source } of sources) {
-      try {
-        const items = await getValidArticles(url, source, 1);
-        headlines.push(...items);
-      } catch (e) {
-        console.warn(`⚠️ Error from ${source}`, e);
-      }
+    const headlines = [];
+    for (const src of sources) {
+      const result = await getValidArticles(src.url, src.source, 1);
+      if (result.length > 0) headlines.push(...result);
     }
 
     if (!headlines.length) {
       return res.status(200).json({
         success: false,
         headlines: [
-          { title: "⚠️ No headlines found right now. Try again later.", url: "#", source: "System" }
+          { title: "⚠️ No headlines available right now. Check back later.", url: "#", source: "System" }
         ]
       });
     }
 
     return res.status(200).json({ success: true, headlines });
-  } catch (err: any) {
-    console.error("❌ Top-level error in real-estate-news.js:", err?.stack || err?.message || err);
+  } catch (err) {
+    console.error("❌ Real Estate News Error:", err?.message || err);
     return res.status(500).json({
       success: false,
       headlines: [
-        { title: "⚠️ Server error. Please try again shortly.", url: "#", source: "System" }
+        { title: "⚠️ Server error. Unable to load news.", url: "#", source: "System" }
       ]
     });
   }
-}
+};
