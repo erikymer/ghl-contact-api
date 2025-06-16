@@ -1,62 +1,39 @@
-window.addEventListener("load", async () => {
-  const newsList = document.getElementById("news-list");
-  if (!newsList) return;
+async function loadNews() {
+  const params = new URLSearchParams(window.location.search);
+  const zip = params.get("zip") || "08052";
+  const state = params.get("state") || "NJ";
 
-  const cid = new URLSearchParams(window.location.search).get("cid");
-  if (!cid) {
-    newsList.innerHTML = `<li>❌ Missing contact ID (cid) in URL.</li>`;
-    return;
-  }
+  const newsContainer = document.getElementById("news-headlines");
+  const loadingMessage = document.getElementById("loading-message");
 
   try {
-    // Fetch contact data from your API
-    const contactRes = await fetch(`https://ghl-contact-api.vercel.app/api/get-contact-data?cid=${cid}`);
-    const contactJson = await contactRes.json();
+    const res = await fetch(`https://ghl-contact-api.vercel.app/api/real-estate-news?zip=${zip}&state=${state}`);
+    const data = await res.json();
 
-    if (!contactJson.success) {
-      newsList.innerHTML = `<li>⚠️ Unable to fetch contact info.</li>`;
+    loadingMessage.style.display = "none";
+
+    if (!data.success || !data.headlines || data.headlines.length === 0) {
+      newsContainer.innerHTML = `<p>⚠️ No headlines available right now. Check back later.</p>`;
       return;
     }
 
-    const zip = contactJson.postal_code || "08052";
-    const state = contactJson.state || "NJ";
+    newsContainer.innerHTML = "";
 
-    // Fetch news from backend
-    const newsRes = await fetch(`https://ghl-contact-api.vercel.app/api/real-estate-news?zip=${zip}&state=${state}`);
-    const newsJson = await newsRes.json();
-    console.log("📰 News API response:", newsJson);
-
-    newsList.innerHTML = "";
-
-    const { stateNews = [], nationalNews = [] } = newsJson;
-
-    const renderItem = ({ title, url, source }) => {
-      // 🚫 Filter Redfin fluff headlines
-      if (source === "Redfin") {
-        const blockedWords = ["newfins", "hires", "agents", "joined", "team"];
-        const lowerTitle = title.toLowerCase();
-        if (blockedWords.some(word => lowerTitle.includes(word))) {
-          return; // Skip this Redfin article
-        }
-      }
-
-      const li = document.createElement("li");
-      li.style.marginBottom = "10px";
-      li.innerHTML = `
-        <span style="background:#f1f1f1; font-size:12px; padding:3px 6px; border-radius:4px; color:#555; margin-right:8px;">${source}</span>
-        <a href="${url}" target="_blank" style="color:#0077b6; text-decoration:none;">${title}</a>
-      `;
-      newsList.appendChild(li);
-    };
-
-    stateNews.slice(0, 2).forEach(renderItem);
-    nationalNews.slice(0, 3).forEach(renderItem);
-
-    if (newsList.children.length === 0) {
-      newsList.innerHTML = `<li>⚠️ No headlines available right now. Check back later.</li>`;
-    }
-  } catch (e) {
-    console.warn("❌ Error loading news:", e);
-    newsList.innerHTML = `<li>⚠️ Failed to load news. Please try again later.</li>`;
+    data.headlines.forEach(item => {
+      const link = document.createElement("a");
+      link.href = item.url;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = `📰 ${item.title} (${item.source})`;
+      link.style.display = "block";
+      link.style.marginBottom = "8px";
+      newsContainer.appendChild(link);
+    });
+  } catch (err) {
+    console.error("❌ Error loading news:", err);
+    loadingMessage.style.display = "none";
+    newsContainer.innerHTML = `<p>⚠️ Failed to load news. Please try again later.</p>`;
   }
-});
+}
+
+document.addEventListener("DOMContentLoaded", loadNews);
