@@ -33,6 +33,42 @@
   <div id="loading-message">Loading news...</div>
   <div id="news-headlines"></div>
 
-  <script src="./news-block.js"></script>
+  <script>
+    async function loadNews() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const cid = urlParams.get("cid");
+      const apiUrl = `https://ghl-contact-api.vercel.app/api/real-estate-news?cid=${cid}`;
+
+      const loading = document.getElementById("loading-message");
+      const container = document.getElementById("news-headlines");
+
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        loading.style.display = "none";
+
+        if (!data.success || !data.headlines || data.headlines.length === 0) {
+          container.innerHTML = "<p>⚠️ No headlines available right now. Check back later.</p>";
+          return;
+        }
+
+        data.headlines.forEach(article => {
+          const link = document.createElement("a");
+          link.href = article.url;
+          link.target = "_blank";
+          link.rel = "noopener";
+          link.textContent = `📌 ${article.title} (${article.source})`;
+          container.appendChild(link);
+        });
+      } catch (err) {
+        loading.style.display = "none";
+        container.innerHTML = "<p>⚠️ Failed to load news. Please try again later.</p>";
+        console.error("❌ Error loading news:", err);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadNews);
+  </script>
 </body>
 </html>
