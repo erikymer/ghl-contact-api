@@ -29,21 +29,24 @@ function isClean(title = "", source = "") {
 }
 
 async function getValidArticles(feedUrl: string, source: string, maxArticles = 2) {
+  let feed;
   try {
-    const feed = await parser.parseURL(feedUrl);
-    const valid = feed.items
-      .filter(item => item && item.title && isRecent(item) && isClean(item.title, source))
-      .slice(0, maxArticles)
-      .map(item => ({
-        title: item.title,
-        url: item.link || "#",
-        source,
-      }));
-    return valid;
+    feed = await parser.parseURL(feedUrl);
   } catch (err: any) {
-    console.warn(`⚠️ Skipping source ${source}:`, err?.message || err);
+    console.warn(`⚠️ Failed to parse feed for ${source}:`, err?.message || err);
     return [];
   }
+
+  if (!feed?.items?.length) return [];
+
+  return feed.items
+    .filter(item => item && item.title && isRecent(item) && isClean(item.title, source))
+    .slice(0, maxArticles)
+    .map(item => ({
+      title: item.title,
+      url: item.link || "#",
+      source,
+    }));
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
