@@ -2,42 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Real Estate News</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      font-size: 15px;
+      background: #f9f9f9;
       padding: 20px;
       margin: 0;
-      background: #fff;
+      color: #333;
     }
-    ul {
-      padding-left: 0;
-      list-style: none;
-      margin: 0;
-    }
-    li {
-      margin-bottom: 10px;
-    }
-    .source {
-      background: #f1f1f1;
-      font-size: 12px;
-      padding: 3px 6px;
-      border-radius: 4px;
-      color: #555;
-      margin-right: 8px;
-    }
-    a {
-      color: #0077b6;
+    #news-headlines a {
+      display: block;
+      margin-bottom: 12px;
       text-decoration: none;
+      color: #0077cc;
+      font-size: 16px;
+    }
+    #news-headlines a:hover {
+      text-decoration: underline;
+    }
+    #loading-message {
+      font-style: italic;
+      color: #888;
     }
   </style>
 </head>
 <body>
-  <ul id="news-list">
-    <li>Loading real estate news...</li>
-  </ul>
-  <script src="/widgets/news-block.js"></script>
+  <h2>📰 Latest Real Estate Headlines</h2>
+  <div id="loading-message">Loading news...</div>
+  <div id="news-headlines"></div>
+
+  <script src="./news-block.js"></script>
 </body>
 </html>
