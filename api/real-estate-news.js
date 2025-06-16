@@ -31,7 +31,6 @@ function isClean(title = "", source = "") {
 async function getValidArticles(feedUrl: string, source: string, maxArticles = 2) {
   try {
     const feed = await parser.parseURL(feedUrl);
-
     if (!feed?.items?.length) return [];
 
     return feed.items
@@ -82,8 +81,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     const headlines = results
-      .filter(r => r.status === "fulfilled")
-      .flatMap(r => (r as PromiseFulfilledResult<any>).value || [])
+      .filter((r): r is PromiseFulfilledResult<any> => r.status === "fulfilled")
+      .flatMap(r => r.value || [])
       .filter(Boolean);
 
     if (!headlines.length) {
