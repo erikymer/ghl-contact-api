@@ -1,5 +1,5 @@
-const Parser = require("rss-parser");
-const fetch = require("node-fetch");
+import { NextApiRequest, NextApiResponse } from "next";
+import Parser from "rss-parser/dist/rss-parser.min.mjs"; // ESM-compatible build
 
 const parser = new Parser();
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -47,7 +47,7 @@ async function getValidArticles(feedUrl, source, maxArticles = 2) {
   }
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   res.setHeader("Content-Type", "application/json");
 
   try {
@@ -93,6 +93,7 @@ module.exports = async (req, res) => {
     ];
 
     const headlines = [];
+
     for (const src of sources) {
       const result = await getValidArticles(src.url, src.source, 1);
       if (result.length > 0) headlines.push(...result);
@@ -109,7 +110,7 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({ success: true, headlines });
   } catch (err) {
-    console.error("❌ Real Estate News Error:", err?.message || err);
+    console.error("❌ News API Error:", err);
     return res.status(500).json({
       success: false,
       headlines: [
@@ -117,4 +118,4 @@ module.exports = async (req, res) => {
       ]
     });
   }
-};
+}
