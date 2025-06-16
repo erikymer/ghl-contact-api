@@ -39,7 +39,6 @@ async function getValidArticles(feedUrl: string, source: string, maxArticles = 2
         url: item.link || "#",
         source,
       }));
-
     return valid;
   } catch (err) {
     console.warn(`⚠️ Skipping source: ${source}`, err?.message || err);
@@ -75,7 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ];
 
     const allHeadlines = await Promise.all(
-      sources.map(({ url, source }) => getValidArticles(url, source, 2)) // ✅ up to 2 articles per source
+      sources.map(({ url, source }) => getValidArticles(url, source, 2))
     );
 
     const headlines = allHeadlines.flat().filter(Boolean);
