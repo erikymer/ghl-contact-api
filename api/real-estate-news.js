@@ -94,6 +94,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
+    res.setHeader("Content-Type", "application/json");
     return res.status(200).json({ success: true, headlines });
   } catch (err) {
     console.error("❌ Top-level error in real-estate-news.js:", err);
