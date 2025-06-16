@@ -47,47 +47,57 @@ async function getValidArticles(feedUrl: string, source: string, maxArticles = 2
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { zip = "08052", state = "NJ" } = req.query;
+  try {
+    const { zip = "08052", state = "NJ" } = req.query;
 
-  if (!zip || !state || zip.toString().length !== 5 || state.toString().length < 2) {
-    return res.status(200).json({
-      success: true,
-      headlines: [
-        { title: "⚠️ Missing location data. Unable to load news.", url: "#", source: "System" }
-      ]
-    });
-  }
+    if (!zip || !state || zip.toString().length !== 5 || state.toString().length < 2) {
+      return res.status(200).json({
+        success: true,
+        headlines: [
+          { title: "⚠️ Missing location data. Unable to load news.", url: "#", source: "System" }
+        ]
+      });
+    }
 
-  const gnewsUrl = `https://news.google.com/rss/search?q=${zip}+real+estate+when:30d&hl=en-US&gl=US&ceid=US:en`;
+    const gnewsUrl = `https://news.google.com/rss/search?q=${zip}+real+estate+when:30d&hl=en-US&gl=US&ceid=US:en`;
 
-  const sources = [
-    { url: gnewsUrl, source: "GNews" },
-    { url: "https://www.redfin.com/news/feed/", source: "Redfin" },
-    { url: "https://www.zillow.com/research/feed/", source: "Zillow" },
-    { url: "https://www.nar.realtor/newsroom/rss.xml", source: "NAR" },
-    { url: "https://www.corelogic.com/intelligence/feed/", source: "CoreLogic" },
-    { url: "https://www.nahb.org/rss/industry-news", source: "NAHB" },
-    { url: "https://www.freddiemac.com/rss/freddie-mac-perspectives", source: "FreddieMac" },
-    { url: "https://www.altosresearch.com/blog/rss.xml", source: "Altos" },
-    { url: "https://www.realtor.com/news/rss", source: "Realtor.com" }
-  ];
+    const sources = [
+      { url: gnewsUrl, source: "GNews" },
+      { url: "https://www.redfin.com/news/feed/", source: "Redfin" },
+      { url: "https://www.zillow.com/research/feed/", source: "Zillow" },
+      { url: "https://www.nar.realtor/newsroom/rss.xml", source: "NAR" },
+      { url: "https://www.corelogic.com/intelligence/feed/", source: "CoreLogic" },
+      { url: "https://www.nahb.org/rss/industry-news", source: "NAHB" },
+      { url: "https://www.freddiemac.com/rss/freddie-mac-perspectives", source: "FreddieMac" },
+      { url: "https://www.altosresearch.com/blog/rss.xml", source: "Altos" },
+      { url: "https://www.realtor.com/news/rss", source: "Realtor.com" }
+    ];
 
-  const results = await Promise.allSettled(
-    sources.map(({ url, source }) => getValidArticles(url, source, 2))
-  );
+    const results = await Promise.allSettled(
+      sources.map(({ url, source }) => getValidArticles(url, source, 2))
+    );
 
-  const headlines = results
-    .flatMap(r => (r.status === "fulfilled" ? r.value : []))
-    .filter(Boolean);
+    const headlines = results
+      .flatMap(r => (r.status === "fulfilled" ? r.value : []))
+      .filter(Boolean);
 
-  if (!headlines.length) {
+    if (!headlines.length) {
+      return res.status(200).json({
+        success: false,
+        headlines: [
+          { title: "⚠️ No headlines available right now. Check back later.", url: "#", source: "System" }
+        ]
+      });
+    }
+
+    return res.status(200).json({ success: true, headlines });
+  } catch (err) {
+    console.error("❌ Top-level error in real-estate-news.js:", err);
     return res.status(200).json({
       success: false,
       headlines: [
-        { title: "⚠️ No headlines available right now. Check back later.", url: "#", source: "System" }
+        { title: "⚠️ Server error. Unable to load news.", url: "#", source: "System" }
       ]
     });
   }
-
-  return res.status(200).json({ success: true, headlines });
 }
