@@ -28,12 +28,12 @@ function isClean(title = "", source = "") {
   return !filterList.some(word => lower.includes(word)) && !isListingFormat(title);
 }
 
-async function getValidArticles(feedUrl, source, maxArticles = 2) {
+async function getValidArticles(feedUrl, source, maxArticles = 3) {
   try {
     const feed = await parser.parseURL(feedUrl);
     if (!feed?.items?.length) return [];
 
-    return feed.items
+    const validItems = feed.items
       .filter(item => item && item.title && isRecent(item) && isClean(item.title, source))
       .slice(0, maxArticles)
       .map(item => ({
@@ -41,6 +41,12 @@ async function getValidArticles(feedUrl, source, maxArticles = 2) {
         url: item.link || "#",
         source,
       }));
+
+    if (validItems.length === 0) {
+      console.warn(`⚠️ No valid headlines from: ${source}`);
+    }
+
+    return validItems;
   } catch (err) {
     console.warn(`⚠️ Skipping source: ${source}`, err?.message || err);
     return [];
@@ -96,7 +102,11 @@ export default async function handler(req, res) {
 
     for (const src of sources) {
       const result = await getValidArticles(src.url, src.source, 3);
-      if (result.length > 0) headlines.push(...result);
+      if (result.length > 0) {
+        headlines.push(...result);
+      } else {
+        console.warn(`⚠️ No headlines returned from source: ${src.source}`);
+      }
     }
 
     if (!headlines.length) {
