@@ -108,11 +108,11 @@ export default async function handler(req, res) {
       { url: gnewsUrl, source: "GNews" },
       { url: "https://www.redfin.com/news/feed/", source: "Redfin" },
       { url: "https://www.zillow.com/research/feed/", source: "Zillow" },
-      { url: "https://www.nar.realtor/newsroom/rss.xml", source: "NAR" },
+      { url: "https://www.housingwire.com/rss/", source: "HousingWire" },
       { url: "https://www.corelogic.com/intelligence/feed/", source: "CoreLogic" },
-      { url: "https://www.nahb.org/rss/industry-news", source: "NAHB" },
+      { url: "https://www.nahb.org/blog/rss", source: "NAHB" },
       { url: "https://www.freddiemac.com/rss/freddie-mac-perspectives", source: "FreddieMac" },
-      { url: "https://www.altosresearch.com/blog/rss.xml", source: "Altos" },
+      { url: "https://blog.altosresearch.com/rss.xml", source: "Altos" },
       { url: "https://www.realtor.com/news/rss", source: "Realtor.com" }
     ];
 
