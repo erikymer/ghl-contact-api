@@ -1,4 +1,4 @@
-// real-estate-news.js (ESM-compatible version for Vercel with enhanced logging)
+// real-estate-news.js (ESM-compatible version for Vercel with enhanced logging and limited headlines)
 import Parser from 'rss-parser';
 
 const parser = new Parser();
@@ -119,7 +119,8 @@ export default async function handler(req, res) {
     const headlines = [];
 
     for (const src of sources) {
-      const result = await getValidArticles(src.url, src.source, 3);
+      if (headlines.length >= 6) break; // 🚫 limit total to 6
+      const result = await getValidArticles(src.url, src.source, 1); // ✅ limit to 1 per source
       if (result.length > 0) {
         headlines.push(...result);
       } else {
