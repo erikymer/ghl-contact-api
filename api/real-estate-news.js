@@ -28,7 +28,7 @@ function isClean(title = "", source = "") {
   return !filterList.some(word => lower.includes(word)) && !isListingFormat(title);
 }
 
-async function getValidArticles(feedUrl, source, maxArticles = 3) {
+async function getValidArticles(feedUrl, source, maxArticles = 1) {
   try {
     const feed = await parser.parseURL(feedUrl);
     if (!feed?.items?.length) {
